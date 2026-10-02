@@ -1,3 +1,0 @@
-application: reference-helm-app
-cluster: oke-example
-resourcesPath: examples/oke-example/applications/reference-helm-app

@@ -1,3 +1,0 @@
-cluster: oke-example
-description: Sanitized example of one registered cluster object.
-clusterResourcesPath: profiles/example/cluster-resources

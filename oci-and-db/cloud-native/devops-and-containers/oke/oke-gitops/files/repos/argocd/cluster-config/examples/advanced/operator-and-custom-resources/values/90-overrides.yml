@@ -1,4 +1,0 @@
-# Applied after 00-base.yml; this retention value wins.
-prometheus:
-  prometheusSpec:
-    retention: 15d

@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fleet-demo-settings
-data:
-  message: managed locally by decentralized Flux

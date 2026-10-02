@@ -1,5 +1,0 @@
-{
-  "trigger": "eventbridge_daily_scan",
-  "lookback_hours": 24,
-  "process_all": false
-}
