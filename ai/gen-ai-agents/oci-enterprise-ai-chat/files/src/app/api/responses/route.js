@@ -40,6 +40,7 @@ export async function POST(request) {
     const modelId = model || 'openai.gpt-oss-120b';
 
     // Multi-agent models use /v1, all others use /openai/v1
+    // Llama oes not work due to the openai/ placeholder - TODO: Check why no multi-agent?
     const basePath = modelId.includes('multi-agent') ? '/v1' : '/openai/v1';
 
     // Build request - OCI manages history via conversation parameter
