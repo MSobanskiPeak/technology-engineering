@@ -262,6 +262,10 @@ export default function Home({ initialConversationId = null }) {
       "google.gemini-2.5-flash",
       "google.gemini-2.5-flash-lite",
       "google.gemini-2.5-pro",
+      // xAI
+      "xai.grok-4.6",
+      "cohere.command-a-03-2025",
+      "meta.llama-3.3-70b-instruct",
       // Internal-only entries (empty array on the public branch)
       ...INTERNAL_MODELS,
     ];
