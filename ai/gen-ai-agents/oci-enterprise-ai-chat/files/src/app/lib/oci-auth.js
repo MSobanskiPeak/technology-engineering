@@ -55,7 +55,8 @@ export async function signRequest(method, url, headersObj, body = null) {
   const request = {
     method: method,
     headers: headers,
-    uri: parsedUrl.pathname + parsedUrl.search,
+    // uri: parsedUrl.pathname + parsedUrl.search,
+    uri: url,
     path: parsedUrl.pathname + parsedUrl.search,
     body: body,
   };
