@@ -23,6 +23,9 @@ import {
   getChartColor,
   getChartColors,
 } from "../../utils/chartParser";
+import { createLogger } from '../../lib/logger';
+
+  
 
 const CHART_HEIGHT = { s: 150, m: 200, l: 280 };
 
@@ -84,6 +87,11 @@ export function WidgetBarChart({ props }) {
   const showLegend = props._legend && props._legend !== "n";
   const height = getHeight(props._h);
   const stacked = props._stack === "1";
+
+
+  const log = createLogger('chart bar');
+
+  log.info('Chart Data ------------------------------', data);
 
   return (
     <ChartWrapper height={height}>

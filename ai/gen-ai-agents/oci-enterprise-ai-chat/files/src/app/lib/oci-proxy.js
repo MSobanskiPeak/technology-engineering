@@ -95,6 +95,39 @@ export async function ociRequest(method, path, options = {}) {
 }
 
 /**
+ * Make a signed request to an arbitrary OCI URL (e.g. an Agent Hub gateway
+ * endpoint), outside the two GenAI hosts above. Same signing as ociRequest().
+ *
+ * @param {string} method - HTTP method
+ * @param {string} url - Full https URL
+ * @param {object} options
+ * @param {object|null} options.body - JSON body (for POST/PUT)
+ * @param {object} options.extraHeaders - Additional headers to merge
+ * @param {AbortSignal} options.signal - Abort signal forwarded to fetch
+ * @returns {Promise<Response>} Raw fetch response
+ */
+export async function ociSignedFetch(method, url, options = {}) {
+  const { body = null, extraHeaders = {}, signal } = options;
+  const headers = {
+    'accept': 'application/json',
+    'host': new URL(url).host,
+    ...extraHeaders,
+  };
+
+  if (body !== null) {
+    const bodyString = JSON.stringify(body);
+    headers['content-type'] = 'application/json';
+    headers['x-content-sha256'] = crypto.createHash('sha256').update(bodyString).digest('base64');
+    headers['content-length'] = Buffer.byteLength(bodyString).toString();
+    const signedHeaders = await signRequest(method, url, headers, bodyString);
+    return fetch(url, { method, headers: signedHeaders, body: bodyString, signal });
+  }
+
+  const signedHeaders = await signRequest(method, url, headers);
+  return fetch(url, { method, headers: signedHeaders, signal });
+}
+
+/**
  * Convert a fetch Response into a NextResponse with consistent error handling.
  */
 export async function toNextResponse(response) {

@@ -97,9 +97,52 @@ const createGenaiAgentService = () => {
     }
   };
 
+  // Agent Hub agents (model id "agenthub.<name>") are reached over A2A via
+  // /api/a2a. A2A keeps its own conversation thread (contextId), stored here
+  // per chat + agent so follow-up messages continue the same thread.
+  const isAgentHubModel = (model) => (model || '').startsWith('agenthub.');
+  const A2A_CONTEXTS_KEY = 'a2aContextIds';
+
+  const getA2AContextId = (convId, model) => {
+    if (!convId || typeof window === 'undefined') return null;
+    try {
+      return JSON.parse(localStorage.getItem(A2A_CONTEXTS_KEY) || '{}')[`${convId}:${model}`] || null;
+    } catch { return null; }
+  };
+
+  const setA2AContextId = (convId, model, contextId) => {
+    if (!convId || typeof window === 'undefined') return;
+    try {
+      const map = JSON.parse(localStorage.getItem(A2A_CONTEXTS_KEY) || '{}');
+      map[`${convId}:${model}`] = contextId;
+      localStorage.setItem(A2A_CONTEXTS_KEY, JSON.stringify(map));
+    } catch { /* ignore */ }
+  };
+
+  // A2A turns don't go through the Responses API, so OCI's Conversation Store
+  // never sees them. Save the exchange there so reloading the chat shows it.
+  const saveA2AExchange = async (convId, input, answer) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/conversations?addItemTo=${convId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: [
+            { type: 'message', role: 'user', content: input },
+            { type: 'message', role: 'assistant', content: [{ type: 'output_text', text: answer }] },
+          ],
+        }),
+      });
+      if (!res.ok) console.warn('[A2A] Could not save exchange to conversation:', res.status);
+    } catch (error) {
+      console.warn('[A2A] Could not save exchange to conversation:', error);
+    }
+  };
+
   const sendMessage = async (input, onChunk, options = {}) => {
     currentAbortController = new AbortController();
     const payload = { input };
+    const isAgentHub = isAgentHubModel(options.model);
 
     // Add conversation ID if we have one
     if (conversationId) {
@@ -115,8 +158,14 @@ const createGenaiAgentService = () => {
       payload.previousResponseId = options.previousResponseId;
     }
 
+    // The agent brings its own instructions and tools — skip prompt/tool assembly.
+    if (isAgentHub) {
+      const contextId = getA2AContextId(conversationId, options.model);
+      if (contextId) payload.contextId = contextId;
+    }
+
     // Build system prompt: BASE + user custom + widgets (if enabled)
-    if (typeof window !== 'undefined') {
+    if (!isAgentHub && typeof window !== 'undefined') {
       const customPrompt = localStorage.getItem('systemPrompt') || '';
       const widgetsEnabled = localStorage.getItem('widgetsEnabled') === 'true';
 
@@ -369,7 +418,7 @@ const createGenaiAgentService = () => {
       }
     }
 
-    const response = await fetch(`${API_BASE_URL}/responses`, {
+    const response = await fetch(`${API_BASE_URL}/${isAgentHub ? 'a2a' : 'responses'}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -488,6 +537,10 @@ const createGenaiAgentService = () => {
             conversationId = data.conversation_id;
           }
 
+          if (data.a2a_context_id) {
+            setA2AContextId(conversationId, options.model, data.a2a_context_id);
+          }
+
           if (data.text) {
             fullAnswer += data.text;
             if (onChunk) {
@@ -568,7 +621,7 @@ const createGenaiAgentService = () => {
           }
 
           // Log unhandled chunk types for debugging
-          if (!data.text && !data.mcp && !data.thinking && !data.annotations && !data.generated_image && !data.reasoning && !data.code_execution && !data.code_delta && !data.code_status && !data.item_error && !data.function_call && !data.mcp_approval_request && !data.mcp_function_call && !data.done && !data.text_done && !data.conversation_id && !data.response_id && !data.error && !data.response_incomplete && !data.no_summary) {
+          if (!data.text && !data.mcp && !data.thinking && !data.annotations && !data.generated_image && !data.reasoning && !data.code_execution && !data.code_delta && !data.code_status && !data.item_error && !data.function_call && !data.mcp_approval_request && !data.mcp_function_call && !data.done && !data.text_done && !data.conversation_id && !data.response_id && !data.error && !data.response_incomplete && !data.no_summary && !data.a2a_context_id) {
             console.warn('[Stream] Unhandled chunk type:', Object.keys(data), data);
           }
         }
@@ -616,6 +669,10 @@ const createGenaiAgentService = () => {
         err.name = 'PrematureStreamClose';
         throw err;
       }
+    }
+
+    if (isAgentHub && conversationId && fullAnswer) {
+      await saveA2AExchange(conversationId, input, fullAnswer);
     }
 
     // Update local storage with last message info

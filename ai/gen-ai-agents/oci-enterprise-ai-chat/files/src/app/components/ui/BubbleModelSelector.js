@@ -12,6 +12,7 @@ const PROVIDER_META = {
   google: { label: "Google", color: "#1a1a1a", bg: "#f5f5f5", icon: "simple-icons:google" },
   cohere: { label: "Cohere", color: "#1a1a1a", bg: "#f5f5f5", icon: "simple-icons:cohere" },
   meta: { label: "Meta", color: "#1a1a1a", bg: "#f5f5f5", icon: "simple-icons:meta" },
+  agenthub: { label: "Agent Hub", color: "#1a1a1a", bg: "#f5f5f5", icon: "lucide:bot" },
 };
 
 const RECOMMENDED = "google.gemini-2.5-pro";

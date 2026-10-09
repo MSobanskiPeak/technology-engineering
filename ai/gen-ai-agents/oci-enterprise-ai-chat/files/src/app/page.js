@@ -285,6 +285,22 @@ export default function Home({ initialConversationId = null }) {
     }
     setLoadingModels(false);
 
+    // Agent Hub agents (A2A) are configured server-side via AGENT_HUB_AGENTS and
+    // appended as "agenthub.<name>" entries. A saved agent selection is restored
+    // once the list arrives (the check above ran before it was known).
+    fetch('/api/a2a')
+      .then(res => (res.ok ? res.json() : { agents: [] }))
+      .then(({ agents = [] }) => {
+        const agentIds = agents.map(a => a.id);
+        if (agentIds.length === 0) return;
+        setModels(prev => [...prev, ...agentIds.filter(id => !prev.includes(id))]);
+        if (agentIds.includes(savedModel)) {
+          setSelectedModel(savedModel);
+          localStorage.setItem("selectedModel", savedModel);
+        }
+      })
+      .catch(() => { /* Agent Hub is optional */ });
+
     // Fetch user for mobile drawer
     fetch('/api/auth/session')
       .then(res => res.json())
