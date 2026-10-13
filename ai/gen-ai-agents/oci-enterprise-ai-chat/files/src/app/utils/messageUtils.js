@@ -1,4 +1,5 @@
 import { parseWidgetV2Complete } from "./widgetV2Parser";
+import { parseWidgetProps } from "./widgetParser";
 
 export const createUserMessage = (text, userId) => {
   return {
@@ -239,18 +240,9 @@ export const parseContentWithWidgets = (content) => {
     }
 
     if (match[1] !== undefined) {
-      // V1 widget: §§...§§
-      const widgetContent = match[1];
-      const widgetProps = {};
-      const pairs = widgetContent.split("|");
-      for (const pair of pairs) {
-        const colonIndex = pair.indexOf(":");
-        if (colonIndex > 0) {
-          const key = pair.slice(0, colonIndex).trim();
-          const value = pair.slice(colonIndex + 1).trim();
-          widgetProps[key] = value;
-        }
-      }
+      // V1 widget: §§...§§ — same parsing as live streaming, so repeated keys
+      // (r:…|r:… table rows) are numbered instead of overwriting each other.
+      const widgetProps = parseWidgetProps(match[1]);
 
       messages.push({
         type: "widget",

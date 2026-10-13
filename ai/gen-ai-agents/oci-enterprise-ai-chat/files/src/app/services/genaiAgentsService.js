@@ -97,10 +97,17 @@ const createGenaiAgentService = () => {
     }
   };
 
-  // Agent Hub agents (model id "agenthub.<name>") are reached over A2A via
-  // /api/a2a. A2A keeps its own conversation thread (contextId), stored here
-  // per chat + agent so follow-up messages continue the same thread.
+  // Agent Hub agents (model id "agenthub.<name>") are reached through one of two routes:
+  // - 'chat': /api/agent-chat — the deployment's /chat endpoint (faster). The app
+  //   sends the conversation history with every message.
+  // - 'a2a':  /api/a2a — the A2A protocol. The agent keeps the thread (contextId).
+  // Either way the agent only gets the user's message; with widgets on, the
+  // route turns its answer into widgets with a formatting model.
+  const AGENT_HUB_TRANSPORT = 'chat';
   const isAgentHubModel = (model) => (model || '').startsWith('agenthub.');
+
+  // A2A keeps its own conversation thread (contextId), stored here per chat +
+  // agent so follow-up messages continue the same thread.
   const A2A_CONTEXTS_KEY = 'a2aContextIds';
 
   const getA2AContextId = (convId, model) => {
@@ -119,9 +126,10 @@ const createGenaiAgentService = () => {
     } catch { /* ignore */ }
   };
 
-  // A2A turns don't go through the Responses API, so OCI's Conversation Store
-  // never sees them. Save the exchange there so reloading the chat shows it.
-  const saveA2AExchange = async (convId, input, answer) => {
+  // Agent turns don't go through the Responses API, so OCI's Conversation Store
+  // never sees them. Save the exchange there so reloading the chat shows it
+  // (and so /api/agent-chat can send it back to the agent as history).
+  const saveAgentHubExchange = async (convId, input, answer) => {
     try {
       const res = await fetch(`${API_BASE_URL}/conversations?addItemTo=${convId}`, {
         method: 'POST',
@@ -159,11 +167,13 @@ const createGenaiAgentService = () => {
     }
 
     // The agent brings its own instructions and tools — skip prompt/tool assembly.
-    // With widgets on, /api/a2a passes the agent's answer through a formatting
+    // With widgets on, the route passes the agent's answer through a formatting
     // model that applies the widget prompts (the agent never sees them).
     if (isAgentHub) {
-      const contextId = getA2AContextId(conversationId, options.model);
-      if (contextId) payload.contextId = contextId;
+      if (AGENT_HUB_TRANSPORT === 'a2a') {
+        const contextId = getA2AContextId(conversationId, options.model);
+        if (contextId) payload.contextId = contextId;
+      }
 
       if (typeof window !== 'undefined' && localStorage.getItem('widgetsEnabled') === 'true') {
         const sections = [WIDGET_INLINE_PROMPT, WIDGET_LAYOUT_PROMPT];
@@ -426,7 +436,8 @@ const createGenaiAgentService = () => {
       }
     }
 
-    const response = await fetch(`${API_BASE_URL}/${isAgentHub ? 'a2a' : 'responses'}`, {
+    const route = !isAgentHub ? 'responses' : AGENT_HUB_TRANSPORT === 'a2a' ? 'a2a' : 'agent-chat';
+    const response = await fetch(`${API_BASE_URL}/${route}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -680,7 +691,7 @@ const createGenaiAgentService = () => {
     }
 
     if (isAgentHub && conversationId && fullAnswer) {
-      await saveA2AExchange(conversationId, input, fullAnswer);
+      await saveAgentHubExchange(conversationId, input, fullAnswer);
     }
 
     // Update local storage with last message info
