@@ -22,6 +22,8 @@ import {
   parsePieChart,
   getChartColor,
   getChartColors,
+  formatChartTick,
+  createTooltipFormatter,
 } from "../../utils/chartParser";
 import { createLogger } from '../../lib/logger';
 
@@ -60,8 +62,8 @@ export function WidgetLineChart({ props }) {
       <ReLineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
         {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />}
         <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="rgba(0,0,0,0.4)" />
-        <YAxis tick={{ fontSize: 11 }} stroke="rgba(0,0,0,0.4)" />
-        <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+        <YAxis tick={{ fontSize: 11 }} stroke="rgba(0,0,0,0.4)" tickFormatter={formatChartTick} />
+        <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} formatter={createTooltipFormatter(series)} />
         {showLegend && <Legend wrapperStyle={{ fontSize: 11 }} />}
         {series.map((s, i) => (
           <Line
@@ -98,8 +100,8 @@ export function WidgetBarChart({ props }) {
       <ReBarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
         {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />}
         <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="rgba(0,0,0,0.4)" />
-        <YAxis tick={{ fontSize: 11 }} stroke="rgba(0,0,0,0.4)" />
-        <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+        <YAxis tick={{ fontSize: 11 }} stroke="rgba(0,0,0,0.4)" tickFormatter={formatChartTick} />
+        <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} formatter={createTooltipFormatter(series)} />
         {showLegend && <Legend wrapperStyle={{ fontSize: 11 }} />}
         {series.map((s, i) => (
           <Bar

@@ -11,6 +11,30 @@ const parseValues = (str) => {
   });
 };
 
+const SUFFIX_MULTIPLIERS = { k: 1e3, m: 1e6, b: 1e9 };
+
+// Parse a chart number the way models tend to write it: "$1,200", "6.84M",
+// "753.27K", "12%". Returns NaN when the value isn't a number.
+export const parseChartNumber = (raw) => {
+  if (typeof raw === "number") return raw;
+  const cleaned = String(raw ?? "").trim().replace(/[$€£¥,\s]/g, "").replace(/%$/, "");
+  const match = /^(-?\d*\.?\d+)([kmb])?$/i.exec(cleaned);
+  if (!match) return NaN;
+  const multiplier = SUFFIX_MULTIPLIERS[match[2]?.toLowerCase()] || 1;
+  // toPrecision avoids float noise like 6.84 * 1e6 = 6839999.999999999
+  return Number((parseFloat(match[1]) * multiplier).toPrecision(12));
+};
+
+// Parse semicolon-separated chart values into numbers (null when not numeric,
+// so the chart skips the point instead of breaking on a string).
+const parseNumbers = (str) => {
+  if (!str) return [];
+  return str.split(";").map(v => {
+    const num = parseChartNumber(v);
+    return isNaN(num) ? null : num;
+  });
+};
+
 // Parse line/bar/area chart data
 export const parseSeriesChart = (props) => {
   const labels = parseValues(props.x);
@@ -22,26 +46,42 @@ export const parseSeriesChart = (props) => {
       let rawValue = props[key];
       let seriesName = null;
 
-      // Handle "Name:value1;value2" format (AI sometimes generates this)
       if (rawValue && rawValue.includes(":")) {
-        const colonIdx = rawValue.indexOf(":");
-        const beforeColon = rawValue.slice(0, colonIdx);
-        // Check if before colon is a name (not a number)
-        if (isNaN(parseFloat(beforeColon))) {
-          seriesName = beforeColon.trim();
-          rawValue = rawValue.slice(colonIdx + 1);
+        const items = rawValue.split(";");
+        if (items.length > 1 && items.every(item => item.includes(":"))) {
+          // "Europe:6.84M;Asia:753K" — a label on every value. x already names
+          // the points, so keep only the values.
+          rawValue = items.map(item => item.slice(item.lastIndexOf(":") + 1)).join(";");
+        } else {
+          // "Name:value1;value2" — series name prefix
+          const colonIdx = rawValue.indexOf(":");
+          const beforeColon = rawValue.slice(0, colonIdx);
+          // Check if before colon is a name (not a number)
+          if (isNaN(parseChartNumber(beforeColon))) {
+            seriesName = beforeColon.trim();
+            rawValue = rawValue.slice(colonIdx + 1);
+          }
         }
       }
 
-      const values = parseValues(rawValue);
+      const values = parseNumbers(rawValue);
       const nameKey = key === "y" ? "y_n" : `${key}_n`;
+      const explicitName = seriesName || props[nameKey];
       series.push({
         key,
-        name: seriesName || props[nameKey] || (key === "y" ? "Series 1" : `Series ${key.slice(1)}`),
+        name: explicitName || (key === "y" ? "Series 1" : `Series ${key.slice(1)}`),
+        named: !!explicitName,
         data: values
       });
     }
   });
+
+  // A single unnamed series reads better under the chart title than "Series 1"
+  // in the legend (tooltips hide it, see createTooltipFormatter).
+  const chartTitle = props.ch_ln || props.ch_br;
+  if (series.length === 1 && !series[0].named && chartTitle) {
+    series[0].name = chartTitle;
+  }
 
   // Build recharts data format: [{name: "Ene", y: 100, y2: 90}, ...]
   const data = labels.map((label, i) => {
@@ -70,13 +110,13 @@ export const parsePieChart = (props) => {
     if (typeof value === "string" && value.includes(":")) {
       // This shouldn't happen for pie charts but handle it anyway
       const parts = value.split(":");
-      if (parts.length === 2 && !isNaN(parseFloat(parts[1]))) {
+      if (parts.length === 2 && !isNaN(parseChartNumber(parts[1]))) {
         name = parts[0].trim();
         val = parts[1].trim();
       }
     }
 
-    const numValue = parseFloat(val);
+    const numValue = parseChartNumber(val);
     if (!isNaN(numValue)) {
       data.push({ name, value: numValue });
     }
@@ -96,8 +136,25 @@ export const parseGaugeChart = (props) => {
 
 // Parse sparkline (just values)
 export const parseSparkline = (value) => {
-  return parseValues(value).map((v, i) => ({ i, v }));
+  return parseNumbers(value).map((v, i) => ({ i, v }));
 };
+
+// Tooltip values: 6840000 → "6,840,000"
+export const formatChartValue = (value) =>
+  typeof value === "number" ? value.toLocaleString() : value;
+
+// Tooltip formatter for series charts. A single unnamed series shows just the
+// value under the point's label ("Europe / 6,840,000"); returning a null name
+// makes Recharts drop both the name and the " : " separator.
+export const createTooltipFormatter = (series) => (value, name) => {
+  const hideName = series.length === 1 && !series[0].named;
+  return [formatChartValue(value), hideName ? null : name];
+};
+
+// Axis ticks: 6840000 → "6.8M"
+const compactFormat = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
+export const formatChartTick = (value) =>
+  typeof value === "number" ? compactFormat.format(value) : value;
 
 // Color palette
 export const CHART_COLORS = {

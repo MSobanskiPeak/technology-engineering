@@ -159,9 +159,17 @@ const createGenaiAgentService = () => {
     }
 
     // The agent brings its own instructions and tools — skip prompt/tool assembly.
+    // With widgets on, /api/a2a passes the agent's answer through a formatting
+    // model that applies the widget prompts (the agent never sees them).
     if (isAgentHub) {
       const contextId = getA2AContextId(conversationId, options.model);
       if (contextId) payload.contextId = contextId;
+
+      if (typeof window !== 'undefined' && localStorage.getItem('widgetsEnabled') === 'true') {
+        const sections = [WIDGET_INLINE_PROMPT, WIDGET_LAYOUT_PROMPT];
+        if (localStorage.getItem('conciseEnabled') === 'true') sections.push(CONCISE_SYSTEM_PROMPT);
+        payload.formatInstructions = sections.join('\n\n');
+      }
     }
 
     // Build system prompt: BASE + user custom + widgets (if enabled)
