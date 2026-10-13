@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ociSignedFetch } from '../../lib/oci-proxy';
 import { createLogger } from '../../lib/logger';
+import { MODEL_PREFIX, getAgents, findAgent, readSseEvents } from '../../lib/agent-hub';
 
 // Bridge between the chat UI and OCI Agent Hub agents over the A2A protocol.
 //
@@ -11,30 +12,9 @@ import { createLogger } from '../../lib/logger';
 
 export const maxDuration = 300;
 
-const MODEL_PREFIX = 'agenthub.';
 const CARD_TTL_MS = 5 * 60_000;
 const TERMINAL_STATES = new Set(['completed', 'failed', 'canceled', 'rejected', 'input-required', 'auth-required']);
 const ERROR_STATES = new Set(['failed', 'canceled', 'rejected']);
-
-// AGENT_HUB_AGENTS="name=https://gateway.../agentendpoint/<id>/a2a,other=https://..."
-function getAgents() {
-  return (process.env.AGENT_HUB_AGENTS || '')
-    .split(',')
-    .map(entry => entry.trim())
-    .filter(Boolean)
-    .map(entry => {
-      const i = entry.indexOf('=');
-      if (i <= 0) return null;
-      return { name: entry.slice(0, i).trim(), url: entry.slice(i + 1).trim().replace(/\/+$/, '') };
-    })
-    .filter(a => a && a.name && a.url.startsWith('https://'));
-}
-
-function findAgent(model) {
-  if (!model?.startsWith(MODEL_PREFIX)) return null;
-  const name = model.slice(MODEL_PREFIX.length);
-  return getAgents().find(a => a.name === name) || null;
-}
 
 const cardCache = new Map();
 
@@ -236,35 +216,6 @@ function createEventTranslator(emit, log) {
       return false;
     },
   };
-}
-
-// Yields the parsed `data:` payload of each SSE event.
-async function* readSseEvents(body) {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  let dataLines = [];
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split(/\r?\n/);
-      buffer = lines.pop() || '';
-      for (const line of lines) {
-        if (line === '') {
-          if (dataLines.length) yield dataLines.join('\n');
-          dataLines = [];
-        } else if (line.startsWith('data:')) {
-          dataLines.push(line.slice(5).replace(/^ /, ''));
-        }
-      }
-    }
-    if (buffer.startsWith('data:')) dataLines.push(buffer.slice(5).replace(/^ /, ''));
-    if (dataLines.length) yield dataLines.join('\n');
-  } finally {
-    reader.releaseLock();
-  }
 }
 
 function rpcErrorMessage(error) {

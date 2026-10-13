@@ -97,10 +97,30 @@ const createGenaiAgentService = () => {
     }
   };
 
-  // Agent Hub agents (model id "agenthub.<name>") are reached over A2A via
-  // /api/a2a. A2A keeps its own conversation thread (contextId), stored here
-  // per chat + agent so follow-up messages continue the same thread.
+  // Agent Hub agents (model id "agenthub.<name>") are reached through one of two routes:
+  // - 'chat': /api/agent-chat — the deployment's /chat endpoint, used like a model.
+  //   The app's instructions (widgets, concise, custom prompt) travel inside the
+  //   user message, so widgets work without changing the agent's own prompt.
+  // - 'a2a':  /api/a2a — the A2A protocol. The agent only follows its own prompt.
+  const AGENT_HUB_TRANSPORT = 'chat';
   const isAgentHubModel = (model) => (model || '').startsWith('agenthub.');
+
+  // Instructions sent to agents: the agent has its own prompt and tools, so only
+  // the presentation settings apply (no base prompt, no RAG / SQL tool prompts).
+  const buildAgentInstructions = () => {
+    if (typeof window === 'undefined') return '';
+    const sections = [];
+    const customPrompt = localStorage.getItem('systemPrompt') || '';
+    if (customPrompt) sections.push(`## ADDITIONAL INSTRUCTIONS\n${customPrompt}`);
+    if (localStorage.getItem('widgetsEnabled') === 'true') {
+      sections.push(WIDGET_INLINE_PROMPT, WIDGET_LAYOUT_PROMPT);
+    }
+    if (localStorage.getItem('conciseEnabled') === 'true') sections.push(CONCISE_SYSTEM_PROMPT);
+    return sections.join('\n\n');
+  };
+
+  // A2A keeps its own conversation thread (contextId), stored here per chat +
+  // agent so follow-up messages continue the same thread.
   const A2A_CONTEXTS_KEY = 'a2aContextIds';
 
   const getA2AContextId = (convId, model) => {
@@ -119,9 +139,10 @@ const createGenaiAgentService = () => {
     } catch { /* ignore */ }
   };
 
-  // A2A turns don't go through the Responses API, so OCI's Conversation Store
-  // never sees them. Save the exchange there so reloading the chat shows it.
-  const saveA2AExchange = async (convId, input, answer) => {
+  // Agent turns don't go through the Responses API, so OCI's Conversation Store
+  // never sees them. Save the exchange there so reloading the chat shows it
+  // (and so /api/agent-chat can send it back to the agent as history).
+  const saveAgentHubExchange = async (convId, input, answer) => {
     try {
       const res = await fetch(`${API_BASE_URL}/conversations?addItemTo=${convId}`, {
         method: 'POST',
@@ -158,10 +179,15 @@ const createGenaiAgentService = () => {
       payload.previousResponseId = options.previousResponseId;
     }
 
-    // The agent brings its own instructions and tools — skip prompt/tool assembly.
+    // The agent brings its own tools — skip the model prompt/tool assembly below.
     if (isAgentHub) {
-      const contextId = getA2AContextId(conversationId, options.model);
-      if (contextId) payload.contextId = contextId;
+      if (AGENT_HUB_TRANSPORT === 'a2a') {
+        const contextId = getA2AContextId(conversationId, options.model);
+        if (contextId) payload.contextId = contextId;
+      } else {
+        const instructions = buildAgentInstructions();
+        if (instructions) payload.systemPrompt = instructions;
+      }
     }
 
     // Build system prompt: BASE + user custom + widgets (if enabled)
@@ -418,7 +444,8 @@ const createGenaiAgentService = () => {
       }
     }
 
-    const response = await fetch(`${API_BASE_URL}/${isAgentHub ? 'a2a' : 'responses'}`, {
+    const route = !isAgentHub ? 'responses' : AGENT_HUB_TRANSPORT === 'a2a' ? 'a2a' : 'agent-chat';
+    const response = await fetch(`${API_BASE_URL}/${route}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -672,7 +699,7 @@ const createGenaiAgentService = () => {
     }
 
     if (isAgentHub && conversationId && fullAnswer) {
-      await saveA2AExchange(conversationId, input, fullAnswer);
+      await saveAgentHubExchange(conversationId, input, fullAnswer);
     }
 
     // Update local storage with last message info
