@@ -273,6 +273,16 @@ export default function useChat({ initialConversationId = null, selectedModel, o
             state.responses.push({ type: "reasoning", text: chunk.reasoning.text, done: false });
           }
         }
+      } else if (chunk.reasoning.type === 'status' && chunk.reasoning.text) {
+        // Agent progress ("Initialising session"): shown as the reasoning chip's
+        // label while it streams, not as reasoning text.
+        let activeReasoning = state.responses.findLast(r => r.type === "reasoning" && !r.done);
+        if (!activeReasoning) {
+          state.responses = state.responses.filter(r => r.type !== "thinking");
+          activeReasoning = { type: "reasoning", text: "", done: false };
+          state.responses.push(activeReasoning);
+        }
+        activeReasoning.status = chunk.reasoning.text;
       } else if (chunk.reasoning.type === 'done' || chunk.reasoning.type === 'item_end') {
         const reasoningItem = state.responses.findLast(r => r.type === "reasoning" && !r.done);
         if (reasoningItem) reasoningItem.done = true;

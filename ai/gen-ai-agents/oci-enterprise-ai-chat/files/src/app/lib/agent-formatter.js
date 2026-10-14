@@ -40,6 +40,9 @@ async function streamFormattedAnswer({ question, answer, formatInstructions, emi
         { role: 'system', content: `${FORMATTER_RULES}\n\n${formatInstructions}` },
         { role: 'user', content: `User question:\n${question}\n\nAgent answer:\n${answer}` },
       ],
+      // Formatting needs little thinking: low effort halves the time (~0.9s vs ~2.1s
+      // for gpt-oss-120b) with the same widget quality.
+      reasoning: { effort: 'low' },
       stream: true,
       store: false,
       max_output_tokens: 16000,
@@ -66,37 +69,99 @@ async function streamFormattedAnswer({ question, answer, formatInstructions, emi
   log.info('Formatter completed', { model: FORMATTER_MODEL, chars: emitted });
 }
 
+// Agent progress lines ("...Initialising session") are not part of the answer:
+// they become status updates shown as the reasoning chip's label.
+const STATUS_PREFIX = '...';
+
 /**
- * Wraps a route's chunk emitter. Without formatInstructions, chunks pass straight
- * through. With them, the agent's text is collected and shown in the reasoning
- * panel, and finish() streams the formatted answer.
+ * Wraps a route's chunk emitter.
+ * - Agent progress lines starting with "..." become {reasoning: {type: 'status'}}.
+ * - Without formatInstructions, the rest of the agent's text is the answer.
+ * - With them, it is collected and shown in the reasoning panel, and finish()
+ *   streams the formatted answer.
  */
 export function createAgentOutput({ emit, formatInstructions, log }) {
-  let agentAnswer = '';
-  let panelOpen = false;
+  let agentAnswer = '';   // the agent's answer, without progress lines
+  let panelOpen = false;  // a reasoning item is open in the UI
+  let pending = '';       // start of a line that may still turn out to be a progress line
+  let midLine = false;    // the current line is already known to be answer text
+
+  const closePanel = () => {
+    if (panelOpen) emit({ reasoning: { type: 'done' } });
+    panelOpen = false;
+  };
+
+  const emitStatus = (line) => {
+    const text = line.trim().slice(STATUS_PREFIX.length).trim();
+    if (!text) return;
+    panelOpen = true;
+    emit({ reasoning: { type: 'status', text } });
+  };
+
+  const emitAnswerText = (text) => {
+    if (!text || (!agentAnswer && !text.trim())) return; // skip blank lines before the answer
+    if (formatInstructions) {
+      if (!agentAnswer) emit({ reasoning: { type: 'delta', text: 'Agent answer:\n\n' } });
+      panelOpen = true;
+      emit({ reasoning: { type: 'delta', text } });
+    } else {
+      closePanel(); // progress is over once the answer is being written
+      emit({ text });
+    }
+    agentAnswer += text;
+  };
+
+  const processLine = (line) => (line.trim().startsWith(STATUS_PREFIX) ? emitStatus(line) : emitAnswerText(line));
+
+  // Text arrives in arbitrary pieces. A line is held back only while it could
+  // still be a progress line (it is empty so far, or starts with ".").
+  const handleText = (text) => {
+    let rest = text;
+    while (rest) {
+      const nl = rest.indexOf('\n');
+      const piece = nl === -1 ? rest : rest.slice(0, nl + 1);
+      rest = nl === -1 ? '' : rest.slice(nl + 1);
+      if (midLine) {
+        emitAnswerText(piece);
+      } else {
+        pending += piece;
+        const start = pending.trimStart();
+        if (nl !== -1) {
+          processLine(pending);
+          pending = '';
+        } else if (!start.startsWith(STATUS_PREFIX) && !STATUS_PREFIX.startsWith(start)) {
+          emitAnswerText(pending);
+          pending = '';
+          midLine = true;
+        }
+      }
+      if (nl !== -1) midLine = false;
+    }
+  };
 
   return {
     emit(chunk) {
-      if (!formatInstructions) return emit(chunk);
-      if (chunk.text) {
-        if (!agentAnswer) emit({ reasoning: { type: 'delta', text: 'Agent answer:\n\n' } });
-        agentAnswer += chunk.text;
+      if (chunk.text) return handleText(chunk.text);
+      if (chunk.reasoning?.type === 'delta') {
+        // A2A progress updates arrive as reasoning text.
+        if ((chunk.reasoning.text || '').trim().startsWith(STATUS_PREFIX)) return emitStatus(chunk.reasoning.text);
         panelOpen = true;
-        emit({ reasoning: { type: 'delta', text: chunk.text } });
-      } else if (chunk.reasoning?.type === 'delta') {
-        panelOpen = true;
-        emit(chunk);
-      } else if (chunk.reasoning?.type !== 'done') {
-        // The panel stays open until the agent has finished.
-        emit(chunk);
+        return emit(chunk);
       }
+      if (chunk.reasoning?.type === 'done') {
+        // With formatting, the panel stays open until the agent has finished.
+        if (!formatInstructions) closePanel();
+        return;
+      }
+      emit(chunk);
     },
 
     // Call once the agent has finished answering.
     async finish(question) {
-      if (!formatInstructions) return;
-      if (panelOpen) emit({ reasoning: { type: 'done' } });
-      if (!agentAnswer.trim()) return;
+      if (pending) processLine(pending);
+      pending = '';
+      closePanel();
+      if (!formatInstructions || !agentAnswer.trim()) return;
 
       const startTime = Date.now();
       let formattedChars = 0;

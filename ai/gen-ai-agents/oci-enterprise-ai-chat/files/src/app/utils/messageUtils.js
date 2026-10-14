@@ -405,7 +405,7 @@ export const groupMessages = (messages) => {
         groups.push({ type: "generated_image_placeholder", revisedPrompt: message.revisedPrompt, messageIndex: index });
         break;
       case "reasoning":
-        groups.push({ type: "reasoning", text: message.text, done: message.done, messageIndex: index });
+        groups.push({ type: "reasoning", text: message.text, done: message.done, status: message.status, messageIndex: index });
         break;
       case "code_execution":
         groups.push({ type: "code_execution", id: message.id, code: message.code, output: message.output, containerId: message.containerId, status: message.status, messageIndex: index });

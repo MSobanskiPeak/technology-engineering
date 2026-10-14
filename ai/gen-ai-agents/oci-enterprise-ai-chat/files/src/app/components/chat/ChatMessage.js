@@ -97,9 +97,12 @@ function BouncingDots() {
 }
 
 // Reasoning summary block — matches mcp_chip_row style with staged entrance.
-function ReasoningBlock({ text, done }) {
+// `status` (an agent's current progress step) replaces the label while streaming.
+function ReasoningBlock({ text, done, status }) {
   const [isOpen, setIsOpen] = useState(false);
   const isStreaming = !done;
+  // Only progress updates and no reasoning text: nothing to show once finished.
+  if (done && !text?.trim()) return null;
   return (
     <Box sx={{ my: 1 }}>
       <motion.div
@@ -132,7 +135,7 @@ function ReasoningBlock({ text, done }) {
           }}
         >
           <Brain size={14} />
-          <span>Reasoning</span>
+          <span>{isStreaming && status ? status : "Reasoning"}</span>
           {isStreaming ? (
             <BouncingDots />
           ) : (
@@ -1354,7 +1357,7 @@ const ChatMessage = memo(function ChatMessage({
             )}
 
             {group.type === "reasoning" && (
-              <ReasoningBlock text={group.text} done={group.done !== false} />
+              <ReasoningBlock text={group.text} done={group.done !== false} status={group.status} />
             )}
 
             {group.type === "code_execution" && (
