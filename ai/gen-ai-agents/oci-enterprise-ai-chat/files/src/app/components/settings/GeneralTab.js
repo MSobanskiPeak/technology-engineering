@@ -2,8 +2,8 @@
 
 import { Box, IconButton, TextField, Typography, Chip, createTheme, ThemeProvider, useTheme } from "@mui/material";
 import { motion } from "framer-motion";
-import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
+import { GrOracle } from "react-icons/gr";
 import IOSSwitch from "../ui/IOSSwitch";
 import { Building2, Moon, Sun, Settings as SettingsIcon, Users } from "lucide-react";
 import Header from "../ui/Header";
@@ -476,8 +476,13 @@ export default function GeneralTab() {
                 onChange={(e) => setUiSettings({ ...uiSettings, showLabIcon: e.target.checked })}
                 sx={{ transform: "scale(0.8)" }}
               />
-              <Image src="/entypo--lab-flask.svg" alt="" width={16} height={16} style={{ opacity: 0.7, ...(isDarkBg && { filter: "brightness(0) invert(1)" }) }} />
-              <Typography sx={{ fontSize: "0.82rem", color: "var(--dm-muted, rgba(0,0,0,0.5))" }}>icon next to title</Typography>
+              <Typography
+                component="span"
+                sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, fontSize: "0.82rem", lineHeight: 1, color: "var(--dm-muted, rgba(0,0,0,0.5))" }}
+              >
+                <GrOracle size={18} color="#e8562f" aria-hidden="true" style={{ display: "block", flexShrink: 0 }} />
+                icon next to title
+              </Typography>
             </Box>
           </Box>
         </Box>

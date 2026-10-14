@@ -2,9 +2,9 @@
 
 import { Avatar, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, ListItemIcon, ListSubheader, Menu, MenuItem, Skeleton, Tooltip, Typography } from "@mui/material";
 import { AnimatePresence, motion } from "framer-motion";
-import Image from "next/image";
 import { Building2, Check, ChevronDown, ClipboardCopy, Download, LogOut, Menu as MenuIcon, Share2, SquarePen, Users, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { GrOracle } from "react-icons/gr";
 import BubbleModelSelector from "./BubbleModelSelector";
 import { withBase } from "@/lib/withBase";
 
@@ -157,7 +157,9 @@ export default function Header({
               },
             }}
           >
-            {showLabIcon && <Image src="/entypo--lab-flask.svg" alt="Lab Flask" width={20} height={20} style={isDarkBg ? { filter: "invert(1)" } : undefined} />}
+            {showLabIcon && (
+              <GrOracle size={34} color="#e8562f" aria-hidden="true" style={{ display: "block", flexShrink: 0, alignSelf: "center" }} />
+            )}
             <Typography
               variant="h1"
               sx={{
@@ -168,6 +170,10 @@ export default function Header({
                 fontFamily: "var(--font-oracle-sans), sans-serif",
                 userSelect: "none",
                 lineHeight: 1.3,
+                // Oracle Sans draws its letters ~0.1em above the centre of the
+                // text box, so a centred icon looks low next to the title.
+                position: "relative",
+                top: "0.15em",
               }}
             >
               {appTitle || (<><Box component="span" sx={{ fontWeight: 600 }}>OCI</Box>{" "}Enterprise AI</>)}
