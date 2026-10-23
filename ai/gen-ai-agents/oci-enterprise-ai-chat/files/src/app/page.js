@@ -256,16 +256,16 @@ export default function Home({ initialConversationId = null }) {
 
     const STATIC_MODELS = [
       // OpenAI - External & Internal
-      "openai.gpt-oss-20b",
+      // "openai.gpt-oss-20b",
       "openai.gpt-oss-120b",
-      // Google
-      "google.gemini-2.5-flash",
-      "google.gemini-2.5-flash-lite",
-      "google.gemini-2.5-pro",
-      // xAI
-      "xai.grok-4.6",
-      "cohere.command-a-03-2025",
-      "meta.llama-3.3-70b-instruct",
+      // // Google
+      // "google.gemini-2.5-flash",
+      // "google.gemini-2.5-flash-lite",
+      // "google.gemini-2.5-pro",
+      // // xAI
+      // "xai.grok-4.6",
+      // "cohere.command-a-03-2025",
+      // "meta.llama-3.3-70b-instruct",
       // Internal-only entries (empty array on the public branch)
       ...INTERNAL_MODELS,
     ];
