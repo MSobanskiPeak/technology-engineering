@@ -1217,9 +1217,11 @@ export default function useChat({ initialConversationId = null, selectedModel, o
         const convId = genaiService.getConversationId();
         if (convId) {
           const needsTitle = isNewConversation || await ConversationStorage.get(convId).then(c => !c?.title || c.title === "New conversation").catch(() => false);
+          console.log("needsTitle","",needsTitle)
           if (needsTitle) {
             generateTitle(inputText, result.answer).then(title => {
               if (title) {
+                console.log("New Tile is:","",title)
                 ConversationStorage.update(convId, { title }).then(refreshRecentConversations);
               }
             });

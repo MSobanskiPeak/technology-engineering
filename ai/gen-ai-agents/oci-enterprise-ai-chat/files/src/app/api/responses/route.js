@@ -936,8 +936,9 @@ export async function POST(request) {
                 // showing "premature close" for legitimate incomplete/failed responses.
                 else if (eventType === 'response.completed' || eventType === 'response.incomplete' || eventType === 'response.failed') {
                   responseCompleted = true;
-                  const returnedConvId = data.response?.conversation;
-                  if (returnedConvId) {
+                  // The Responses API returns the conversation as {id: "conv_..."}.
+                  const returnedConvId = data.response?.conversation?.id || data.response?.conversation;
+                  if (typeof returnedConvId === 'string' && returnedConvId) {
                     controller.enqueue(encoder.encode(JSON.stringify({ conversation_id: returnedConvId }) + '\n'));
                   }
 

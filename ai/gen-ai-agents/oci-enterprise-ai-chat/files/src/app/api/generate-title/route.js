@@ -13,14 +13,17 @@ export async function POST(request) {
       return NextResponse.json({ error: 'userMessage is required' }, { status: 400 });
     }
 
-    const prompt = `Convert to a clean 2-4 word title (fix typos):
-"tell me a jok" → "Joke Request"
-"whats the wether" → "Weather Inquiry"
-"${userMessage.substring(0, 150)}" → "`;
-
+    // Instructions go in a system message: OCI ignores `instructions` for gpt-oss.
     const requestBody = {
-      model: 'google.gemini-2.5-flash-lite',
-      input: [{ role: 'user', content: prompt }],
+      model: 'openai.gpt-oss-120b',
+      input: [
+        {
+          role: 'system',
+          content: 'You write titles for chat conversations. Reply with ONLY the title for the user\'s message: 2-4 words, Title Case, typos fixed, no quotes, no punctuation, no explanation. Examples: "tell me a jok" -> Joke Request; "whats the wether" -> Weather Inquiry.',
+        },
+        { role: 'user', content: userMessage.substring(0, 300) },
+      ],
+      reasoning: { effort: 'low' },
       stream: false
     };
 
@@ -39,7 +42,9 @@ export async function POST(request) {
     if (typeof data.output === 'string') {
       rawText = data.output;
     } else if (Array.isArray(data.output)) {
-      const textOutput = data.output.find(o => o.type === 'message' || o.content);
+      // Reasoning models put a `reasoning` item (which quotes the prompt) before
+      // the `message` item: read the message.
+      const textOutput = data.output.find(o => o.type === 'message') || data.output.find(o => o.type !== 'reasoning' && o.content);
       if (textOutput?.content) {
         if (Array.isArray(textOutput.content)) {
           const textContent = textOutput.content.find(c => c.type === 'output_text' || c.text);
@@ -54,21 +59,12 @@ export async function POST(request) {
       rawText = data.text;
     }
 
-    // Extract title from response - look for the actual title
-    let title = rawText;
-
-    // Look for quoted title
-    const quotedMatch = rawText.match(/"([^"]{2,40})"/);
-    if (quotedMatch) {
-      title = quotedMatch[1];
-    } else if (rawText.includes('\n')) {
-      // Take last non-empty line
-      const lines = rawText.split('\n').map(l => l.trim()).filter(l => l);
-      title = lines[lines.length - 1];
-    }
+    // The reply should be just the title: take its first non-empty line.
+    let title = rawText.split('\n').map(l => l.trim()).find(Boolean) || '';
 
     // Clean up
-    title = title.replace(/^["']|["']$/g, '').trim();
+    title = title.replace(/^[-*•#>\s]+/, '').trim();
+    title = title.replace(/^["'“”*]+|["'“”*]+$/g, '').trim();
     title = title.replace(/[.!?:,]+$/, '').trim();
 
     // Remove reasoning prefixes

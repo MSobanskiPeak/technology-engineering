@@ -551,9 +551,12 @@ const createGenaiAgentService = () => {
             onChunk({ response_incomplete: data.response_incomplete });
           }
 
-          // Update conversation ID (OCI returns one for project-scoped RAG sessions)
-          if (data.conversation_id) {
-            conversationId = data.conversation_id;
+          // Update conversation ID (OCI returns one for project-scoped RAG sessions).
+          // The Responses API sends it as an object ({id: "conv_..."}); storing the
+          // object broke every ConversationStorage lookup (titles never saved).
+          const returnedConvId = typeof data.conversation_id === 'string' ? data.conversation_id : data.conversation_id?.id;
+          if (returnedConvId) {
+            conversationId = returnedConvId;
           }
 
           if (data.a2a_context_id) {
