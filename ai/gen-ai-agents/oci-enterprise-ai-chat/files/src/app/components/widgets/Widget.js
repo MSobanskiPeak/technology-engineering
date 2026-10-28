@@ -2455,6 +2455,7 @@ function WidgetKPICard({ value, label, color }) {
         }}
       >
         <Typography
+          className="dm-keep-color"
           sx={{
             fontSize: '1.5rem',
             fontWeight: 700,
@@ -2747,7 +2748,7 @@ export default function Widget({ props = {}, streamingKey = null, streamingValue
             animate={{ opacity: 1, x: 0, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            <Typography sx={{ fontSize: "clamp(1.2rem, 4vw, 2rem)", fontWeight: 700, color: isDark ? textColors.primary : themeColor, textAlign: isCentered ? "center" : "left", lineHeight: 1.2, wordBreak: "break-word" }}>{displayValue}</Typography>
+            <Typography className="dm-keep-color" sx={{ fontSize: "clamp(1.2rem, 4vw, 2rem)", fontWeight: 700, color: isDark ? textColors.primary : themeColor, textAlign: isCentered ? "center" : "left", lineHeight: 1.2, wordBreak: "break-word" }}>{displayValue}</Typography>
           </motion.div>
         );
 

@@ -37,8 +37,9 @@ export const lightCssVars = {
 export const darkModeOverrides = {
   color: DARK_TEXT,
 
-  // Typography
-  "& .MuiTypography-root": { color: "inherit" },
+  // Typography — text marked `dm-keep-color` (e.g. accent-coloured tile values)
+  // keeps its own colour instead of turning light.
+  "& .MuiTypography-root:not(.dm-keep-color)": { color: "inherit" },
 
   // Inputs & text fields
   "& .MuiInputBase-root": { color: DARK_TEXT },

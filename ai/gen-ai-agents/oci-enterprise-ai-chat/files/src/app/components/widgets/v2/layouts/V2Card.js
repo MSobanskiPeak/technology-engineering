@@ -27,7 +27,7 @@ export default function V2Card({ attrs = {}, children }) {
         maxWidth: "100%",
         boxSizing: "border-box",
         color: isDark ? COLORS.text.inverse : "inherit",
-        "& .MuiTypography-root": isDark ? { color: "rgba(255,255,255,0.85)" } : {},
+        "& .MuiTypography-root:not(.dm-keep-color)": isDark ? { color: "rgba(255,255,255,0.85)" } : {},
       }}>
         {attrs.title && (
           <Typography sx={{
