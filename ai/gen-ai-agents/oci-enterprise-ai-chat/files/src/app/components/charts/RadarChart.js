@@ -3,6 +3,7 @@
 import { Box, Typography } from "@mui/material";
 import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
+import { CHART_THEME } from "./chartTheme";
 
 export default function RadarChart({ data, title = "Comparison Chart" }) {
   const svgRef = useRef(null);
@@ -35,7 +36,7 @@ export default function RadarChart({ data, title = "Comparison Chart" }) {
       circle.setAttribute("cy", center);
       circle.setAttribute("r", radius);
       circle.setAttribute("fill", "none");
-      circle.setAttribute("stroke", "#e0e0e0");
+      circle.style.stroke = CHART_THEME.grid;
       circle.setAttribute("stroke-width", "1");
       svg.appendChild(circle);
     }
@@ -51,7 +52,7 @@ export default function RadarChart({ data, title = "Comparison Chart" }) {
       line.setAttribute("y1", center);
       line.setAttribute("x2", x);
       line.setAttribute("y2", y);
-      line.setAttribute("stroke", "#e0e0e0");
+      line.style.stroke = CHART_THEME.grid;
       line.setAttribute("stroke-width", "1");
       svg.appendChild(line);
 
@@ -67,7 +68,7 @@ export default function RadarChart({ data, title = "Comparison Chart" }) {
       text.setAttribute("dominant-baseline", "middle");
       text.setAttribute("font-size", "12");
       text.setAttribute("font-family", "var(--font-oracle-sans), sans-serif");
-      text.setAttribute("fill", "#666");
+      text.style.fill = CHART_THEME.muted;
       text.textContent = metric;
       svg.appendChild(text);
     });
@@ -125,7 +126,7 @@ export default function RadarChart({ data, title = "Comparison Chart" }) {
         circle.setAttribute("cy", y);
         circle.setAttribute("r", "4");
         circle.setAttribute("fill", color);
-        circle.setAttribute("stroke", "white");
+        circle.style.stroke = CHART_THEME.pointOutline;
         circle.setAttribute("stroke-width", "2");
         circle.style.animation = `fadeIn 0.5s ease-in-out ${0.5 + itemIndex * 0.3}s forwards`;
         circle.style.opacity = "0";
@@ -168,9 +169,9 @@ export default function RadarChart({ data, title = "Comparison Chart" }) {
           alignItems: "center",
           mb: 3,
           p: 3,
-          backgroundColor: "rgba(0, 0, 0, 0.01)",
+          backgroundColor: CHART_THEME.panelBg,
           borderRadius: 2,
-          border: "1px solid rgba(0, 0, 0, 0.05)",
+          border: `1px solid ${CHART_THEME.panelBorder}`,
         }}
       >
         <Typography
@@ -179,7 +180,7 @@ export default function RadarChart({ data, title = "Comparison Chart" }) {
             mb: 2,
             fontSize: "1.1rem",
             fontWeight: 500,
-            color: "#333",
+            color: CHART_THEME.text,
             fontFamily: "var(--font-oracle-sans), sans-serif",
           }}
         >
@@ -209,7 +210,7 @@ export default function RadarChart({ data, title = "Comparison Chart" }) {
                 variant="body2"
                 sx={{
                   fontSize: "0.9rem",
-                  color: "#666",
+                  color: CHART_THEME.muted,
                   fontFamily: "var(--font-oracle-sans), sans-serif",
                 }}
               >

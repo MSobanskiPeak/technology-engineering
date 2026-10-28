@@ -3,6 +3,7 @@
 import { Box, Typography } from "@mui/material";
 import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
+import { CHART_THEME } from "./chartTheme";
 
 export default function CostBenefitChart({ data, title = "Cost-Benefit Analysis" }) {
   const svgRef = useRef(null);
@@ -49,7 +50,7 @@ export default function CostBenefitChart({ data, title = "Cost-Benefit Analysis"
       gridLine.setAttribute("y1", plotHeight - y);
       gridLine.setAttribute("x2", plotWidth);
       gridLine.setAttribute("y2", plotHeight - y);
-      gridLine.setAttribute("stroke", "#f0f0f0");
+      gridLine.style.stroke = CHART_THEME.grid;
       gridLine.setAttribute("stroke-width", "1");
       g.appendChild(gridLine);
 
@@ -60,7 +61,7 @@ export default function CostBenefitChart({ data, title = "Cost-Benefit Analysis"
       valueLabel.setAttribute("text-anchor", "end");
       valueLabel.setAttribute("font-size", "10");
       valueLabel.setAttribute("font-family", "var(--font-oracle-sans), sans-serif");
-      valueLabel.setAttribute("fill", "#666");
+      valueLabel.style.fill = CHART_THEME.muted;
       valueLabel.textContent = `$${Math.round((maxValue / 5) * i / 1000)}k`;
       g.appendChild(valueLabel);
     }
@@ -100,7 +101,7 @@ export default function CostBenefitChart({ data, title = "Cost-Benefit Analysis"
       value2024.setAttribute("text-anchor", "middle");
       value2024.setAttribute("font-size", "10");
       value2024.setAttribute("font-family", "var(--font-oracle-sans), sans-serif");
-      value2024.setAttribute("fill", "#333");
+      value2024.style.fill = CHART_THEME.text;
       value2024.setAttribute("font-weight", "bold");
       value2024.textContent = `$${category.hd2024}`;
       value2024.style.opacity = "0";
@@ -113,7 +114,7 @@ export default function CostBenefitChart({ data, title = "Cost-Benefit Analysis"
       value2025.setAttribute("text-anchor", "middle");
       value2025.setAttribute("font-size", "10");
       value2025.setAttribute("font-family", "var(--font-oracle-sans), sans-serif");
-      value2025.setAttribute("fill", "#333");
+      value2025.style.fill = CHART_THEME.text;
       value2025.setAttribute("font-weight", "bold");
       value2025.textContent = `$${category.hd2025}`;
       value2025.style.opacity = "0";
@@ -127,7 +128,7 @@ export default function CostBenefitChart({ data, title = "Cost-Benefit Analysis"
       categoryLabel.setAttribute("text-anchor", "middle");
       categoryLabel.setAttribute("font-size", "11");
       categoryLabel.setAttribute("font-family", "var(--font-oracle-sans), sans-serif");
-      categoryLabel.setAttribute("fill", "#666");
+      categoryLabel.style.fill = CHART_THEME.muted;
       categoryLabel.setAttribute("font-weight", "500");
       
       // Handle multi-line labels
@@ -190,7 +191,7 @@ export default function CostBenefitChart({ data, title = "Cost-Benefit Analysis"
     yLabel.setAttribute("transform", `rotate(-90, -50, ${plotHeight / 2})`);
     yLabel.setAttribute("font-size", "12");
     yLabel.setAttribute("font-family", "var(--font-oracle-sans), sans-serif");
-    yLabel.setAttribute("fill", "#666");
+    yLabel.style.fill = CHART_THEME.muted;
     yLabel.textContent = "Cost (USD)";
     g.appendChild(yLabel);
 
@@ -200,7 +201,8 @@ export default function CostBenefitChart({ data, title = "Cost-Benefit Analysis"
     conclusionBox.setAttribute("y", 10);
     conclusionBox.setAttribute("width", 140);
     conclusionBox.setAttribute("height", 80);
-    conclusionBox.setAttribute("fill", "#e8f5e8");
+    conclusionBox.setAttribute("fill", "#4caf50");
+    conclusionBox.setAttribute("fill-opacity", "0.12");
     conclusionBox.setAttribute("stroke", "#4caf50");
     conclusionBox.setAttribute("stroke-width", "2");
     conclusionBox.setAttribute("rx", "5");
@@ -214,7 +216,7 @@ export default function CostBenefitChart({ data, title = "Cost-Benefit Analysis"
     conclusionTitle.setAttribute("text-anchor", "middle");
     conclusionTitle.setAttribute("font-size", "11");
     conclusionTitle.setAttribute("font-family", "var(--font-oracle-sans), sans-serif");
-    conclusionTitle.setAttribute("fill", "#2e7d32");
+    conclusionTitle.style.fill = CHART_THEME.successText;
     conclusionTitle.setAttribute("font-weight", "bold");
     conclusionTitle.textContent = "8-Hour Shifts";
     conclusionTitle.style.opacity = "0";
@@ -227,7 +229,7 @@ export default function CostBenefitChart({ data, title = "Cost-Benefit Analysis"
     conclusionText1.setAttribute("text-anchor", "middle");
     conclusionText1.setAttribute("font-size", "9");
     conclusionText1.setAttribute("font-family", "var(--font-oracle-sans), sans-serif");
-    conclusionText1.setAttribute("fill", "#2e7d32");
+    conclusionText1.style.fill = CHART_THEME.successText;
     conclusionText1.textContent = "HD-2024 saves";
     conclusionText1.style.opacity = "0";
     conclusionText1.style.animation = "fadeIn 0.5s ease-out 2.7s forwards";
@@ -239,7 +241,7 @@ export default function CostBenefitChart({ data, title = "Cost-Benefit Analysis"
     conclusionText2.setAttribute("text-anchor", "middle");
     conclusionText2.setAttribute("font-size", "9");
     conclusionText2.setAttribute("font-family", "var(--font-oracle-sans), sans-serif");
-    conclusionText2.setAttribute("fill", "#2e7d32");
+    conclusionText2.style.fill = CHART_THEME.successText;
     conclusionText2.setAttribute("font-weight", "bold");
     conclusionText2.textContent = "$1,300 initially";
     conclusionText2.style.opacity = "0";
@@ -252,7 +254,7 @@ export default function CostBenefitChart({ data, title = "Cost-Benefit Analysis"
     conclusionText3.setAttribute("text-anchor", "middle");
     conclusionText3.setAttribute("font-size", "9");
     conclusionText3.setAttribute("font-family", "var(--font-oracle-sans), sans-serif");
-    conclusionText3.setAttribute("fill", "#2e7d32");
+    conclusionText3.style.fill = CHART_THEME.successText;
     conclusionText3.textContent = "Perfect for your needs!";
     conclusionText3.style.opacity = "0";
     conclusionText3.style.animation = "fadeIn 0.5s ease-out 2.9s forwards";
@@ -302,9 +304,9 @@ export default function CostBenefitChart({ data, title = "Cost-Benefit Analysis"
           alignItems: "center",
           mb: 3,
           p: 3,
-          backgroundColor: "rgba(0, 0, 0, 0.01)",
+          backgroundColor: CHART_THEME.panelBg,
           borderRadius: 2,
-          border: "1px solid rgba(0, 0, 0, 0.05)",
+          border: `1px solid ${CHART_THEME.panelBorder}`,
         }}
       >
         <Typography
@@ -313,7 +315,7 @@ export default function CostBenefitChart({ data, title = "Cost-Benefit Analysis"
             mb: 2,
             fontSize: "1.1rem",
             fontWeight: 500,
-            color: "#333",
+            color: CHART_THEME.text,
             fontFamily: "var(--font-oracle-sans), sans-serif",
           }}
         >
@@ -338,7 +340,7 @@ export default function CostBenefitChart({ data, title = "Cost-Benefit Analysis"
                 borderRadius: "2px",
               }}
             />
-            <Typography variant="body2" sx={{ fontSize: "0.9rem", color: "#666" }}>
+            <Typography variant="body2" sx={{ fontSize: "0.9rem", color: CHART_THEME.muted }}>
               HD-2024
             </Typography>
           </Box>
@@ -351,7 +353,7 @@ export default function CostBenefitChart({ data, title = "Cost-Benefit Analysis"
                 borderRadius: "2px",
               }}
             />
-            <Typography variant="body2" sx={{ fontSize: "0.9rem", color: "#666" }}>
+            <Typography variant="body2" sx={{ fontSize: "0.9rem", color: CHART_THEME.muted }}>
               HD-2025
             </Typography>
           </Box>

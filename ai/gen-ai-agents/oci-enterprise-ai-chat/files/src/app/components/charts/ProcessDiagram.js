@@ -13,6 +13,11 @@ import {
   Calendar,
   Zap
 } from 'lucide-react';
+import { CHART_THEME } from './chartTheme';
+
+// Panels follow the dark-mode CSS variables (fallbacks = original light colours).
+const SURFACE = 'var(--dm-surface, #ffffff)';
+const PANEL = 'var(--dm-widget-bg, #fafafa)';
 
 const ProcessDiagram = ({ data }) => {
   const { title, steps, currentStep, orderInfo } = data;
@@ -40,7 +45,7 @@ const ProcessDiagram = ({ data }) => {
     if (isCurrent) {
       return {
         iconColor: '#2196f3',
-        backgroundColor: '#e3f2fd',
+        backgroundColor: 'rgba(33, 150, 243, 0.12)',
         borderColor: '#2196f3',
         textColor: '#2196f3',
         fontWeight: 600
@@ -48,17 +53,17 @@ const ProcessDiagram = ({ data }) => {
     } else if (isCompleted) {
       return {
         iconColor: '#4caf50',
-        backgroundColor: '#e8f5e8',
+        backgroundColor: 'rgba(76, 175, 80, 0.12)',
         borderColor: '#4caf50',
         textColor: '#4caf50',
         fontWeight: 500
       };
     } else {
       return {
-        iconColor: '#9e9e9e',
-        backgroundColor: '#fafafa',
-        borderColor: '#e0e0e0',
-        textColor: '#757575',
+        iconColor: CHART_THEME.muted,
+        backgroundColor: PANEL,
+        borderColor: CHART_THEME.grid,
+        textColor: CHART_THEME.muted,
         fontWeight: 400
       };
     }
@@ -79,15 +84,15 @@ const ProcessDiagram = ({ data }) => {
       sx={{
         mb: 2,
         borderRadius: 2,
-        border: '1px solid #e0e0e0',
-        backgroundColor: '#fafafa',
+        border: `1px solid ${CHART_THEME.grid}`,
+        backgroundColor: PANEL,
         overflow: 'hidden'
       }}
     >
       <Box sx={{ 
         p: 2.5, 
-        borderBottom: '1px solid #e0e0e0', 
-        backgroundColor: 'white',
+        borderBottom: `1px solid ${CHART_THEME.grid}`, 
+        backgroundColor: SURFACE,
         borderTopLeftRadius: 'inherit',
         borderTopRightRadius: 'inherit'
       }}>
@@ -95,7 +100,7 @@ const ProcessDiagram = ({ data }) => {
           variant="h6" 
           sx={{ 
             fontWeight: 600, 
-            color: '#1a1a1a',
+            color: CHART_THEME.text,
             fontSize: '1.1rem'
           }}
         >
@@ -105,7 +110,7 @@ const ProcessDiagram = ({ data }) => {
 
       <Box sx={{ 
         p: 3, 
-        backgroundColor: 'white',
+        backgroundColor: SURFACE,
         borderBottomLeftRadius: 'inherit',
         borderBottomRightRadius: 'inherit'
       }}>
@@ -195,7 +200,7 @@ const ProcessDiagram = ({ data }) => {
                       height: '2px',
                       backgroundColor: isStepCompleted(steps[index + 1].name) || isCurrentStep(steps[index + 1].name) 
                         ? '#4caf50' 
-                        : '#e0e0e0',
+                        : CHART_THEME.grid,
                       borderRadius: 1,
                       alignSelf: 'center',
                       mt: 3,
@@ -215,78 +220,78 @@ const ProcessDiagram = ({ data }) => {
         {/* Order Information */}
         {orderInfo && (
           <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 500, mb: 2, color: '#1a1a1a' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 500, mb: 2, color: CHART_THEME.text }}>
               Order Details
             </Typography>
             
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
-              <Box sx={{ p: 2, backgroundColor: '#fafafa', borderRadius: 1, border: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Building2 size={24} style={{ color: '#666' }} />
+              <Box sx={{ p: 2, backgroundColor: PANEL, borderRadius: 1, border: `1px solid ${CHART_THEME.grid}`, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Building2 size={24} style={{ color: CHART_THEME.muted }} />
                 <Box>
-                  <Typography variant="caption" sx={{ color: '#666', fontSize: '0.75rem' }}>
+                  <Typography variant="caption" sx={{ color: CHART_THEME.muted, fontSize: '0.75rem' }}>
                     Supplier
                   </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#1a1a1a' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: CHART_THEME.text }}>
                     {orderInfo.supplier}
                   </Typography>
                 </Box>
               </Box>
               
-              <Box sx={{ p: 2, backgroundColor: '#fafafa', borderRadius: 1, border: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: 2 }}>
-                <DollarSign size={24} style={{ color: '#666' }} />
+              <Box sx={{ p: 2, backgroundColor: PANEL, borderRadius: 1, border: `1px solid ${CHART_THEME.grid}`, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <DollarSign size={24} style={{ color: CHART_THEME.muted }} />
                 <Box>
-                  <Typography variant="caption" sx={{ color: '#666', fontSize: '0.75rem' }}>
+                  <Typography variant="caption" sx={{ color: CHART_THEME.muted, fontSize: '0.75rem' }}>
                     Order Value
                   </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#1a1a1a' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: CHART_THEME.text }}>
                     {orderInfo.orderValue}
                   </Typography>
                 </Box>
               </Box>
               
-              <Box sx={{ p: 2, backgroundColor: '#fafafa', borderRadius: 1, border: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Zap size={24} style={{ color: '#666' }} />
+              <Box sx={{ p: 2, backgroundColor: PANEL, borderRadius: 1, border: `1px solid ${CHART_THEME.grid}`, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Zap size={24} style={{ color: CHART_THEME.muted }} />
                 <Box>
-                  <Typography variant="caption" sx={{ color: '#666', fontSize: '0.75rem' }}>
+                  <Typography variant="caption" sx={{ color: CHART_THEME.muted, fontSize: '0.75rem' }}>
                     Tracking Number
                   </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#1a1a1a' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: CHART_THEME.text }}>
                     {orderInfo.tracking}
                   </Typography>
                 </Box>
               </Box>
               
-              <Box sx={{ p: 2, backgroundColor: '#fafafa', borderRadius: 1, border: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Truck size={24} style={{ color: '#666' }} />
+              <Box sx={{ p: 2, backgroundColor: PANEL, borderRadius: 1, border: `1px solid ${CHART_THEME.grid}`, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Truck size={24} style={{ color: CHART_THEME.muted }} />
                 <Box>
-                  <Typography variant="caption" sx={{ color: '#666', fontSize: '0.75rem' }}>
+                  <Typography variant="caption" sx={{ color: CHART_THEME.muted, fontSize: '0.75rem' }}>
                     Carrier
                   </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#1a1a1a' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: CHART_THEME.text }}>
                     {orderInfo.carrier}
                   </Typography>
                 </Box>
               </Box>
               
-              <Box sx={{ p: 2, backgroundColor: '#fafafa', borderRadius: 1, border: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Calendar size={24} style={{ color: '#666' }} />
+              <Box sx={{ p: 2, backgroundColor: PANEL, borderRadius: 1, border: `1px solid ${CHART_THEME.grid}`, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Calendar size={24} style={{ color: CHART_THEME.muted }} />
                 <Box>
-                  <Typography variant="caption" sx={{ color: '#666', fontSize: '0.75rem' }}>
+                  <Typography variant="caption" sx={{ color: CHART_THEME.muted, fontSize: '0.75rem' }}>
                     Estimated Delivery
                   </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#1a1a1a' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: CHART_THEME.text }}>
                     {orderInfo.estimatedDelivery}
                   </Typography>
                 </Box>
               </Box>
               
-              <Box sx={{ p: 2, backgroundColor: '#fafafa', borderRadius: 1, border: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: 2 }}>
-                <MapPin size={24} style={{ color: '#666' }} />
+              <Box sx={{ p: 2, backgroundColor: PANEL, borderRadius: 1, border: `1px solid ${CHART_THEME.grid}`, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <MapPin size={24} style={{ color: CHART_THEME.muted }} />
                 <Box>
-                  <Typography variant="caption" sx={{ color: '#666', fontSize: '0.75rem' }}>
+                  <Typography variant="caption" sx={{ color: CHART_THEME.muted, fontSize: '0.75rem' }}>
                     Delivery Location
                   </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#1a1a1a' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: CHART_THEME.text }}>
                     {orderInfo.deliveryLocation}
                   </Typography>
                 </Box>

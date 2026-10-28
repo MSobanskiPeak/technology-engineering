@@ -37,12 +37,31 @@ const getHeight = (h) => {
   return CHART_HEIGHT[h] || CHART_HEIGHT.m;
 };
 
+// Dark mode: SVG attributes can't read CSS variables, so the wrapper takes the
+// theme's text colour (--dm-text) and axes, grid and labels draw in currentColor.
+const AXIS_PROPS = {
+  stroke: "currentColor",
+  strokeOpacity: 0.35,
+  tick: { fontSize: 11, fill: "currentColor", fillOpacity: 0.75 },
+};
+const GRID_PROPS = { strokeDasharray: "3 3", stroke: "currentColor", strokeOpacity: 0.12 };
+const TOOLTIP_PROPS = {
+  contentStyle: {
+    fontSize: 12,
+    borderRadius: 8,
+    backgroundColor: "var(--dm-surface, #ffffff)",
+    border: "1px solid var(--dm-border, rgba(0,0,0,0.08))",
+    color: "var(--dm-text, #1a1a1a)",
+  },
+  labelStyle: { color: "var(--dm-text, #1a1a1a)" },
+};
+
 const ChartWrapper = ({ children, height }) => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-    style={{ width: "100%", height }}
+    style={{ width: "100%", height, color: "var(--dm-text, #1a1a1a)" }}
   >
     <ResponsiveContainer width="100%" height="100%">
       {children}
@@ -60,10 +79,14 @@ export function WidgetLineChart({ props }) {
   return (
     <ChartWrapper height={height}>
       <ReLineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-        {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />}
-        <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="rgba(0,0,0,0.4)" />
-        <YAxis tick={{ fontSize: 11 }} stroke="rgba(0,0,0,0.4)" tickFormatter={formatChartTick} />
-        <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} formatter={createTooltipFormatter(series)} />
+        {showGrid && <CartesianGrid {...GRID_PROPS} />}
+        <XAxis dataKey="name" {...AXIS_PROPS} />
+        <YAxis {...AXIS_PROPS} tickFormatter={formatChartTick} />
+        <Tooltip
+          {...TOOLTIP_PROPS}
+          cursor={{ stroke: "currentColor", strokeOpacity: 0.3 }}
+          formatter={createTooltipFormatter(series)}
+        />
         {showLegend && <Legend wrapperStyle={{ fontSize: 11 }} />}
         {series.map((s, i) => (
           <Line
@@ -98,10 +121,14 @@ export function WidgetBarChart({ props }) {
   return (
     <ChartWrapper height={height}>
       <ReBarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-        {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />}
-        <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="rgba(0,0,0,0.4)" />
-        <YAxis tick={{ fontSize: 11 }} stroke="rgba(0,0,0,0.4)" tickFormatter={formatChartTick} />
-        <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} formatter={createTooltipFormatter(series)} />
+        {showGrid && <CartesianGrid {...GRID_PROPS} />}
+        <XAxis dataKey="name" {...AXIS_PROPS} />
+        <YAxis {...AXIS_PROPS} tickFormatter={formatChartTick} />
+        <Tooltip
+          {...TOOLTIP_PROPS}
+          cursor={{ fill: "currentColor", fillOpacity: 0.08 }}
+          formatter={createTooltipFormatter(series)}
+        />
         {showLegend && <Legend wrapperStyle={{ fontSize: 11 }} />}
         {series.map((s, i) => (
           <Bar
@@ -163,7 +190,7 @@ export function WidgetPieChart({ props, isDonut = false }) {
           ))}
         </Pie>
         <Tooltip
-          contentStyle={{ fontSize: 12, borderRadius: 8 }}
+          {...TOOLTIP_PROPS}
           formatter={(value, name) => [`${value}`, name]}
         />
         {showLegend && (
@@ -176,11 +203,11 @@ export function WidgetPieChart({ props, isDonut = false }) {
         )}
         {isDonut && centerValue && (
           <text x="50%" y={showLegend ? "45%" : "50%"} textAnchor="middle" dominantBaseline="middle">
-            <tspan x="50%" dy="-0.2em" fontSize="1.3rem" fontWeight="600">
+            <tspan x="50%" dy="-0.2em" fontSize="1.3rem" fontWeight="600" fill="currentColor">
               {centerValue}
             </tspan>
             {centerLabel && (
-              <tspan x="50%" dy="1.3em" fontSize="0.65rem" fill="rgba(0,0,0,0.5)">
+              <tspan x="50%" dy="1.3em" fontSize="0.65rem" fill="currentColor" fillOpacity={0.5}>
                 {centerLabel}
               </tspan>
             )}

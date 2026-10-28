@@ -3,6 +3,7 @@
 import { Box, Typography } from "@mui/material";
 import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
+import { CHART_THEME } from "./chartTheme";
 
 export default function ScatterChart({ data, title = "Defect Analysis" }) {
   const svgRef = useRef(null);
@@ -43,7 +44,7 @@ export default function ScatterChart({ data, title = "Defect Analysis" }) {
       vLine.setAttribute("y1", 0);
       vLine.setAttribute("x2", x);
       vLine.setAttribute("y2", plotHeight);
-      vLine.setAttribute("stroke", "#f0f0f0");
+      vLine.style.stroke = CHART_THEME.grid;
       vLine.setAttribute("stroke-width", "1");
       g.appendChild(vLine);
       
@@ -53,7 +54,7 @@ export default function ScatterChart({ data, title = "Defect Analysis" }) {
       hLine.setAttribute("y1", y);
       hLine.setAttribute("x2", plotWidth);
       hLine.setAttribute("y2", y);
-      hLine.setAttribute("stroke", "#f0f0f0");
+      hLine.style.stroke = CHART_THEME.grid;
       hLine.setAttribute("stroke-width", "1");
       g.appendChild(hLine);
     }
@@ -64,7 +65,7 @@ export default function ScatterChart({ data, title = "Defect Analysis" }) {
     xAxis.setAttribute("y1", plotHeight);
     xAxis.setAttribute("x2", plotWidth);
     xAxis.setAttribute("y2", plotHeight);
-    xAxis.setAttribute("stroke", "#333");
+    xAxis.style.stroke = CHART_THEME.text;
     xAxis.setAttribute("stroke-width", "2");
     g.appendChild(xAxis);
 
@@ -73,7 +74,7 @@ export default function ScatterChart({ data, title = "Defect Analysis" }) {
     yAxis.setAttribute("y1", 0);
     yAxis.setAttribute("x2", 0);
     yAxis.setAttribute("y2", plotHeight);
-    yAxis.setAttribute("stroke", "#333");
+    yAxis.style.stroke = CHART_THEME.text;
     yAxis.setAttribute("stroke-width", "2");
     g.appendChild(yAxis);
 
@@ -116,7 +117,7 @@ export default function ScatterChart({ data, title = "Defect Analysis" }) {
       circle.setAttribute("cy", cy);
       circle.setAttribute("r", "5");
       circle.setAttribute("fill", color);
-      circle.setAttribute("stroke", "white");
+      circle.style.stroke = CHART_THEME.pointOutline;
       circle.setAttribute("stroke-width", "2");
       circle.style.opacity = "0";
       circle.style.animation = `scatterFadeIn 0.5s ease-in-out ${0.5 + index * 0.1}s forwards`;
@@ -131,7 +132,7 @@ export default function ScatterChart({ data, title = "Defect Analysis" }) {
     xLabel.setAttribute("text-anchor", "middle");
     xLabel.setAttribute("font-size", "12");
     xLabel.setAttribute("font-family", "var(--font-oracle-sans), sans-serif");
-    xLabel.setAttribute("fill", "#666");
+    xLabel.style.fill = CHART_THEME.muted;
     xLabel.textContent = "Operating Hours per Day";
     g.appendChild(xLabel);
 
@@ -142,7 +143,7 @@ export default function ScatterChart({ data, title = "Defect Analysis" }) {
     yLabel.setAttribute("transform", `rotate(-90, -35, ${plotHeight / 2})`);
     yLabel.setAttribute("font-size", "12");
     yLabel.setAttribute("font-family", "var(--font-oracle-sans), sans-serif");
-    yLabel.setAttribute("fill", "#666");
+    yLabel.style.fill = CHART_THEME.muted;
     yLabel.textContent = "Defect Rate (%)";
     g.appendChild(yLabel);
 
@@ -204,9 +205,9 @@ export default function ScatterChart({ data, title = "Defect Analysis" }) {
           alignItems: "center",
           mb: 3,
           p: 3,
-          backgroundColor: "rgba(0, 0, 0, 0.01)",
+          backgroundColor: CHART_THEME.panelBg,
           borderRadius: 2,
-          border: "1px solid rgba(0, 0, 0, 0.05)",
+          border: `1px solid ${CHART_THEME.panelBorder}`,
         }}
       >
         <Typography
@@ -215,7 +216,7 @@ export default function ScatterChart({ data, title = "Defect Analysis" }) {
             mb: 2,
             fontSize: "1.1rem",
             fontWeight: 500,
-            color: "#333",
+            color: CHART_THEME.text,
             fontFamily: "var(--font-oracle-sans), sans-serif",
           }}
         >
@@ -240,7 +241,7 @@ export default function ScatterChart({ data, title = "Defect Analysis" }) {
                 borderRadius: "50%",
               }}
             />
-            <Typography variant="body2" sx={{ fontSize: "0.8rem", color: "#666" }}>
+            <Typography variant="body2" sx={{ fontSize: "0.8rem", color: CHART_THEME.muted }}>
               HD-2024 (Safe Zone)
             </Typography>
           </Box>
@@ -253,7 +254,7 @@ export default function ScatterChart({ data, title = "Defect Analysis" }) {
                 borderRadius: "50%",
               }}
             />
-            <Typography variant="body2" sx={{ fontSize: "0.8rem", color: "#666" }}>
+            <Typography variant="body2" sx={{ fontSize: "0.8rem", color: CHART_THEME.muted }}>
               HD-2024 (High Risk)
             </Typography>
           </Box>
@@ -266,7 +267,7 @@ export default function ScatterChart({ data, title = "Defect Analysis" }) {
                 borderRadius: "50%",
               }}
             />
-            <Typography variant="body2" sx={{ fontSize: "0.8rem", color: "#666" }}>
+            <Typography variant="body2" sx={{ fontSize: "0.8rem", color: CHART_THEME.muted }}>
               HD-2025
             </Typography>
           </Box>
