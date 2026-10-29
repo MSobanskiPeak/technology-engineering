@@ -174,6 +174,7 @@ export default memo(function ScrollableList({
   hasMore = false,
   isLoadingMore = false,
   onLoadMore,
+  fill = false, // grow to the parent's height instead of the fixed 200px
 }) {
   const scrollRef = useRef(null);
   const [gradients, setGradients] = useState({ top: false, bottom: true });
@@ -239,7 +240,12 @@ export default memo(function ScrollableList({
   };
 
   return (
-    <Box sx={{ mt: 2, overflow: "hidden", width: "100%" }}>
+    <Box sx={{
+      mt: fill ? 0 : 2,
+      overflow: "hidden",
+      width: "100%",
+      ...(fill && { display: "flex", flexDirection: "column", minHeight: 0 }),
+    }}>
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -283,11 +289,11 @@ export default memo(function ScrollableList({
         </Box>
       </motion.div>
 
-      <Box sx={{ position: "relative", overflow: "hidden" }}>
+      <Box sx={{ position: "relative", overflow: "hidden", ...(fill && { flex: 1, minHeight: 0 }) }}>
         <Box
           ref={scrollRef}
           onScroll={checkScrollPosition}
-          sx={scrollContainerSx}
+          sx={fill ? { ...scrollContainerSx, height: "100%" } : scrollContainerSx}
         >
           {(refreshing || initialLoading) ? (
             <Stack spacing={0.8}>

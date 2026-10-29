@@ -991,8 +991,8 @@ const ChatMessage = memo(function ChatMessage({
         "&:hover .copy-button": { opacity: 1 },
       }}
     >
-      {/* User message */}
-      <Box sx={{ marginBottom: "0.5rem", "&:hover .copy-button": { opacity: 1 } }}>
+      {/* User message — right-aligned bubble; the response below stays left */}
+      <Box sx={{ marginBottom: "0.5rem", display: "flex", justifyContent: "flex-end", "&:hover .copy-button": { opacity: 1 } }}>
         <motion.div
           initial={false}
           // Scale stays at 1 — the previous animation (1 → 0.85 over 400ms)
@@ -1002,7 +1002,13 @@ const ChatMessage = memo(function ChatMessage({
           // opacity below and the larger mb on past exchanges.
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          style={{ transformOrigin: "left center" }}
+          style={{
+            transformOrigin: "right center",
+            maxWidth: "75%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+          }}
         >
           {exchange.widgetResponse ? null : (
             <>
@@ -1148,11 +1154,19 @@ const ChatMessage = memo(function ChatMessage({
               {exchange.userMessage &&
                !exchange.userMessage.match(/^\[[\d]+ images?\]$/) &&
                !(exchange.userMessage === '[Pasted content]' && exchange.attachedTexts?.length > 0) && (
-                <CollapsibleUserMessage
-                  text={exchange.userMessage.replace(/\s*\[\d+ images?\]$/, '')}
-                  fontSize={contentFontSizes}
-                  isLatest={exchange.isLatest}
-                />
+                <Box sx={{
+                  px: 2,
+                  py: 1,
+                  borderRadius: "16px",
+                  backgroundColor: "var(--dm-user-bubble, rgba(0, 0, 0, 0.05))",
+                  overflowWrap: "anywhere",
+                }}>
+                  <CollapsibleUserMessage
+                    text={exchange.userMessage.replace(/\s*\[\d+ images?\]$/, '')}
+                    fontSize={contentFontSizes}
+                    isLatest={exchange.isLatest}
+                  />
+                </Box>
               )}
             </>
           )}

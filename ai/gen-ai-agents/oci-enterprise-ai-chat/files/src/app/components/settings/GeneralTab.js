@@ -141,16 +141,12 @@ export default function GeneralTab() {
                   isDarkBg={isDarkBg}
                 />
 
-                {/* Body: sidebar + divider + chat */}
+                {/* Body: sidebar + chat */}
                 <Box sx={{ display: "flex", flex: 1, pt: "60px", height: "100%", boxSizing: "border-box" }}>
                   {/* Real ChatSidebar */}
                   <ChatSidebar
-                    uiSettings={uiSettings}
-                    showTextField={true}
-                    chatHistoryLength={0}
-                    inputRef={{ current: null }}
-                    onSubmit={() => {}}
-                    onStop={() => {}}
+                    onToggleCollapsed={() => {}}
+                    onNewConversation={() => {}}
                     recentConversations={[
                       { id: "1", title: "Sales pipeline analysis Q4" },
                       { id: "2", title: "Draft marketing email" },
@@ -160,40 +156,9 @@ export default function GeneralTab() {
                     onConversationClick={() => {}}
                     onConversationDelete={() => {}}
                     onRefreshConversations={() => {}}
-                    isLoading={false}
-                    width={30}
-                    selectedModel="google.gemini-2.5-pro"
                     accentColor={pAccent}
                     isDarkBg={isDarkBg}
                   />
-
-                  {/* Divider */}
-                  <Box sx={{
-                    width: "9px",
-                    position: "relative",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    "&::before": {
-                      content: '""',
-                      position: "absolute",
-                      top: 0,
-                      bottom: 0,
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      width: "1px",
-                      backgroundColor: isDarkBg ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.08)",
-                    },
-                  }}>
-                    <Box sx={{
-                      width: "8px",
-                      height: "28px",
-                      borderRadius: "4px",
-                      backgroundColor: isDarkBg ? DARK_BG : "#fff",
-                      border: `1px solid ${isDarkBg ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.08)"}`,
-                      zIndex: 1,
-                    }} />
-                  </Box>
 
                   {/* Chat area (lightweight mock — no ChatMessage needed) */}
                   <Box sx={{
@@ -205,7 +170,7 @@ export default function GeneralTab() {
                     gap: 2,
                     color: isDarkBg ? "#e5e5e5" : "inherit",
                   }}>
-                    <Box sx={{ maxWidth: 700 }}>
+                    <Box sx={{ maxWidth: 800, width: "100%", mx: "auto" }}>
                       {/* User message */}
                       <Typography sx={{
                         textAlign: "right",

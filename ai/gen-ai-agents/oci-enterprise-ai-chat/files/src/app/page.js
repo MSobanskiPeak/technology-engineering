@@ -19,17 +19,16 @@ import {
   ThemeProvider,
   createTheme,
 } from "@mui/material";
-import { AnimatePresence, motion } from "framer-motion";
 import { LogOut, Settings, Building2, Users } from "lucide-react";
 import { withBase } from "@/lib/withBase";
 import { useBaseRouter as useRouter } from "@/lib/useBaseRouter";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Header from "./components/ui/Header";
 import ChatMessage from "./components/chat/ChatMessage";
 import ChatSidebar from "./components/chat/ChatSidebar";
-import ChatInput from "./components/chat/ChatInput";
+import ChatComposer, { FEED_MAX_WIDTH } from "./components/chat/ChatComposer";
+import FileDropZone from "./components/chat/FileDropZone";
 import ScrollableList from "./components/ui/ScrollableList";
-import TypingEffect from "./components/ui/TypingEffect";
 import OracleLogo from "./components/ui/OracleLogo";
 import useChat from "./hooks/useChat";
 import { darkModeOverrides, darkCssVars, lightCssVars, DARK_BG } from "./config/darkMode";
@@ -38,7 +37,6 @@ import { INTERNAL_MODELS } from "./config/models-internal";
 const INTERNAL_MODE_AVAILABLE = INTERNAL_MODELS.length > 0;
 
 const contentFontSizes = { xs: "1.2rem", sm: "1.4rem", md: "1.6rem" };
-const mobileInputFontSizes = { xs: "1rem", sm: "1.1rem", md: "1.3rem" };
 
 function mixWithWhite(hex, amount) {
   const c = (hex || "#000000").replace("#", "");
@@ -90,43 +88,25 @@ export default function Home({ initialConversationId = null }) {
   const [mobileUser, setMobileUser] = useState(null);
   const [drawerUserMenuAnchor, setDrawerUserMenuAnchor] = useState(null);
 
-  // Sidebar resize state
-  const [sidebarWidth, setSidebarWidth] = useState(30); // percentage
-  const isDragging = useRef(false);
-  const containerRef = useRef(null);
+  // Desktop sidebar collapsed state, remembered per browser
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  const handleMouseDown = useCallback((e) => {
-    e.preventDefault();
-    isDragging.current = true;
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-  }, []);
-
-  const handleMouseMove = useCallback((e) => {
-    if (!isDragging.current || !containerRef.current) return;
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-    // Clamp between 20% and 50%
-    setSidebarWidth(Math.min(50, Math.max(20, newWidth)));
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    if (isDragging.current) {
-      isDragging.current = false;
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    }
-  }, []);
-
-  // Add/remove global mouse listeners (only once)
   useEffect(() => {
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [handleMouseMove, handleMouseUp]);
+    try {
+      setSidebarCollapsed(localStorage.getItem("sidebarCollapsed") === "true");
+    } catch { /* storage unavailable */ }
+  }, []);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed(prev => {
+      try { localStorage.setItem("sidebarCollapsed", String(!prev)); } catch { /* storage unavailable */ }
+      return !prev;
+    });
+  }, []);
+
+  useEffect(() => {
+    router.prefetch?.("/settings");
+  }, [router]);
 
   // Error snackbar state
   const [errorSnackbar, setErrorSnackbar] = useState({
@@ -178,6 +158,9 @@ export default function Home({ initialConversationId = null }) {
     selectedModel,
     onError: handleError,
   });
+
+  // Drives the layout: centred composer on an empty chat, feed + docked composer otherwise
+  const hasConversation = chatHistory.length > 0 || isLoadingConversation;
 
   const handleCloseSnackbar = (_event, reason) => {
     if (reason === "clickaway") return;
@@ -458,6 +441,7 @@ export default function Home({ initialConversationId = null }) {
         onModelChange={handleModelChange}
         loadingModels={loadingModels}
         onNewConversation={handleNewConversation}
+        onOpenSettings={() => router.push("/settings")}
         isMobile={isMobile}
         onMenuToggle={() => setMobileDrawerOpen(true)}
         chatHistory={chatHistory}
@@ -626,9 +610,8 @@ export default function Home({ initialConversationId = null }) {
         </Drawer>
       )}
 
-      {/* Main container */}
+      {/* Main container: sidebar + main column */}
       <Box
-        ref={containerRef}
         sx={{
           display: "flex",
           width: "100%",
@@ -639,255 +622,130 @@ export default function Home({ initialConversationId = null }) {
           zIndex: 2,
         }}
       >
-        {/* Left column - Chat sidebar (desktop only) */}
+        {/* Collapsible sidebar (desktop only — mobile uses the drawer) */}
         {!isMobile && (
-          <>
-            <ChatSidebar
-              uiSettings={uiSettings}
-              showTextField={showTextField}
-              chatHistoryLength={chatHistory.length}
+          <ChatSidebar
+            collapsed={sidebarCollapsed}
+            onToggleCollapsed={toggleSidebar}
+            onNewConversation={handleNewConversation}
+            recentConversations={recentConversations}
+            loadingConversations={loadingConversations}
+            hasMoreConversations={hasMoreConversations}
+            isLoadingMoreConversations={isLoadingMoreConversations}
+            onLoadMoreConversations={loadMoreConversations}
+            activeConversationId={genaiService?.getConversationId()}
+            onConversationClick={handleConversationClick}
+            onConversationDelete={handleConversationDelete}
+            onRefreshConversations={refreshRecentConversations}
+            accentColor={accentForDark}
+            isDarkBg={isDarkBg}
+          />
+        )}
+
+        {/* Main column: message feed + composer */}
+        <FileDropZone
+          inputRef={inputRef}
+          isDarkBg={isDarkBg}
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            color: isDarkBg ? "#e5e5e5" : "inherit",
+          }}
+        >
+          {/* Message feed — empty (and collapsed) until the first message */}
+          <Box
+            ref={chatContainerRef}
+            sx={{
+              flex: hasConversation ? 1 : "0 0 0px",
+              minHeight: 0,
+              overflowY: "auto",
+              overflowX: "hidden",
+              position: "relative",
+            }}
+          >
+            <Box sx={{
+              maxWidth: FEED_MAX_WIDTH,
+              mx: "auto",
+              px: { xs: 2, sm: 3 },
+              pt: 3,
+            }}>
+              {/* Skeleton loading while conversation loads */}
+              {isLoadingConversation && chatHistory.length === 0 && (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 3, pt: 2 }}>
+                  {[0, 1, 2].map((i) => {
+                    const bubbleBg = isDarkBg ? "rgba(255,255,255,0.08)" : "rgba(0, 0, 0, 0.06)";
+                    const lineBg = isDarkBg ? "rgba(255,255,255,0.05)" : "rgba(0, 0, 0, 0.04)";
+                    return (
+                      <Box key={i} sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                        {/* User message skeleton (right) */}
+                        <Skeleton
+                          variant="rounded"
+                          width={i === 0 ? "45%" : i === 1 ? "30%" : "40%"}
+                          height={40}
+                          sx={{ borderRadius: "16px", bgcolor: bubbleBg, alignSelf: "flex-end" }}
+                        />
+                        {/* Assistant message skeleton (left) */}
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.8 }}>
+                          <Skeleton variant="text" width="90%" sx={{ fontSize: "1rem", bgcolor: lineBg }} />
+                          <Skeleton variant="text" width="75%" sx={{ fontSize: "1rem", bgcolor: lineBg }} />
+                          <Skeleton variant="text" width={i === 1 ? "40%" : "60%"} sx={{ fontSize: "1rem", bgcolor: lineBg }} />
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              )}
+
+              {chatHistory.map((exchange, exchangeIndex) => (
+                <ChatMessage
+                  key={exchange.id}
+                  exchange={exchange}
+                  exchangeIndex={exchangeIndex}
+                  latestMessageRef={latestMessageRef}
+                  contentFontSizes={contentFontSizes}
+                  activeChips={activeChips}
+                  onChipChange={handleChipChange}
+                  copiedId={copiedId}
+                  onCopy={handleCopy}
+                  getCopyContent={getExchangeCopyContent}
+                  onWidgetSubmit={handleWidgetSubmit}
+                  onOptionSelect={handleOptionSelect}
+                  onRetry={handleRetry}
+                  onApprovalSubmit={handleApprovalSubmit}
+                  isLoading={isLoading}
+                />
+              ))}
+
+              {/* Dynamic spacer to allow scrolling latest message to top */}
+              {chatHistory.length > 0 && spacerHeight > 0 && (
+                <Box sx={{ height: spacerHeight }} />
+              )}
+            </Box>
+          </Box>
+
+          {/* Composer — centred on an empty chat, docked at the bottom after */}
+          {showTextField && (
+            <ChatComposer
+              centered={!hasConversation}
+              welcomeMessage={uiSettings.welcomeMessage}
               inputRef={inputRef}
               onSubmit={handleSubmit}
               onStop={stopGeneration}
-              recentConversations={recentConversations}
-              loadingConversations={loadingConversations}
-              hasMoreConversations={hasMoreConversations}
-              isLoadingMoreConversations={isLoadingMoreConversations}
-              onLoadMoreConversations={loadMoreConversations}
-              activeConversationId={genaiService?.getConversationId()}
-              onConversationClick={handleConversationClick}
-              onConversationDelete={handleConversationDelete}
-              onRefreshConversations={refreshRecentConversations}
+              placeholder={uiSettings.inputPlaceholder}
               isLoading={isLoading}
-              width={sidebarWidth}
+              disabled={isLoading || isLoadingConversation}
+              models={isMobile ? filteredModels : undefined}
               selectedModel={selectedModel}
-      
-              accentColor={accentForDark}
+              onModelChange={isMobile ? handleModelChange : undefined}
               iconTint={iconTint}
               isDarkBg={isDarkBg}
             />
-
-            {/* Draggable divider */}
-            <Box
-              onMouseDown={handleMouseDown}
-              sx={{
-                width: "9px",
-                cursor: "col-resize",
-                position: "relative",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 10,
-                // Vertical line
-                "&::before": {
-                  content: '""',
-                  position: "absolute",
-                  top: 0,
-                  bottom: 0,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  width: "1px",
-                  backgroundColor: isDarkBg ? "rgba(255,255,255,0.10)" : "rgba(0, 0, 0, 0.08)",
-                  transition: "background-color 0.15s",
-                },
-                "&:hover::before": {
-                  backgroundColor: isDarkBg ? "rgba(255,255,255,0.25)" : "rgba(0, 0, 0, 0.25)",
-                },
-                "&:hover .drag-handle": {
-                  borderColor: isDarkBg ? "rgba(255,255,255,0.25)" : "rgba(0, 0, 0, 0.25)",
-                  height: "32px",
-                },
-              }}
-            >
-              <Box
-                className="drag-handle"
-                sx={{
-                  width: "8px",
-                  height: "28px",
-                  borderRadius: "4px",
-                  backgroundColor: isDarkBg ? DARK_BG : "#fff",
-                  border: `1px solid ${isDarkBg ? "rgba(255,255,255,0.10)" : "rgba(0, 0, 0, 0.08)"}`,
-                  opacity: 1,
-                  transition: "all 0.15s",
-                  zIndex: 11,
-                }}
-              />
-            </Box>
-          </>
-        )}
-
-        {/* Right column - Chat History (or full width on mobile) */}
-        <Box
-          ref={chatContainerRef}
-          sx={{
-            flex: 1,
-            height: "100%",
-            overflowY: "auto",
-            overflowX: "hidden",
-            paddingTop: 2,
-            paddingBottom: isMobile ? "100px" : 4,
-            minWidth: 0,
-            position: "relative",
-            color: isDarkBg ? "#e5e5e5" : "inherit",
-            "&::before": {
-              content: '""',
-              position: "fixed",
-              top: "60px",
-              right: 0,
-              width: isMobile ? "100%" : "70%",
-              height: "40px",
-              background: `linear-gradient(to bottom, ${isDarkBg ? DARK_BG : "white"} 0%, transparent 100%)`,
-              pointerEvents: "none",
-              zIndex: 5,
-            },
-          }}
-        >
-          <Box sx={{
-            maxWidth: 900,
-            px: { xs: 2, sm: 3, md: 4 },
-            mx: isMobile ? "auto" : 0,
-          }}>
-            {/* Mobile welcome message */}
-            {isMobile && chatHistory.length === 0 && !isLoadingConversation && (
-              <Box sx={{ pt: 4, pb: 2 }}>
-                <Box sx={{ mb: 1, ml: "-20px" }}>
-                  {uiSettings.appLogo ? (
-                    <img
-                      src={uiSettings.appLogo}
-                      alt="App Logo"
-                      style={{
-                        maxHeight: "40px",
-                        width: "auto",
-                        objectFit: "contain",
-                        ...(isDarkBg && { filter: "brightness(0) invert(1)", opacity: 0.85 }),
-                      }}
-                    />
-                  ) : (
-                    <OracleLogo accentColor={accentForDark} isDarkBg={isDarkBg} maxHeight={100} />
-                  )}
-                </Box>
-                <AnimatePresence>
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <Typography
-                      variant="h3"
-                      sx={{
-                        fontSize: { xs: "1.5rem", sm: "1.8rem" },
-                        fontWeight: 300,
-                        color: isDarkBg ? "#e5e5e5" : "#000000",
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      Hey,
-                    </Typography>
-                    <Typography
-                      variant="h3"
-                      sx={{
-                        fontSize: { xs: "1.5rem", sm: "1.8rem" },
-                        fontWeight: 300,
-                        color: isDarkBg ? "#e5e5e5" : "#000000",
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      {uiSettings.welcomeMessage}
-                    </Typography>
-                  </motion.div>
-                </AnimatePresence>
-              </Box>
-            )}
-
-            {/* Skeleton loading while conversation loads */}
-            {isLoadingConversation && chatHistory.length === 0 && (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 3, pt: 2 }}>
-                {[0, 1, 2].map((i) => {
-                  const bubbleBg = isDarkBg ? "rgba(255,255,255,0.08)" : "rgba(0, 0, 0, 0.06)";
-                  const lineBg = isDarkBg ? "rgba(255,255,255,0.05)" : "rgba(0, 0, 0, 0.04)";
-                  return (
-                    <Box key={i} sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                      {/* User message skeleton */}
-                      <Skeleton
-                        variant="rounded"
-                        width={i === 0 ? "60%" : i === 1 ? "45%" : "55%"}
-                        height={40}
-                        sx={{ borderRadius: "16px", bgcolor: bubbleBg }}
-                      />
-                      {/* Assistant message skeleton */}
-                      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.8 }}>
-                        <Skeleton variant="text" width="90%" sx={{ fontSize: "1rem", bgcolor: lineBg }} />
-                        <Skeleton variant="text" width="75%" sx={{ fontSize: "1rem", bgcolor: lineBg }} />
-                        <Skeleton variant="text" width={i === 1 ? "40%" : "60%"} sx={{ fontSize: "1rem", bgcolor: lineBg }} />
-                      </Box>
-                    </Box>
-                  );
-                })}
-              </Box>
-            )}
-
-            {chatHistory.map((exchange, exchangeIndex) => (
-              <ChatMessage
-                key={exchange.id}
-                exchange={exchange}
-                exchangeIndex={exchangeIndex}
-                latestMessageRef={latestMessageRef}
-                contentFontSizes={contentFontSizes}
-                activeChips={activeChips}
-                onChipChange={handleChipChange}
-                copiedId={copiedId}
-                onCopy={handleCopy}
-                getCopyContent={getExchangeCopyContent}
-                onWidgetSubmit={handleWidgetSubmit}
-                onOptionSelect={handleOptionSelect}
-                onRetry={handleRetry}
-                onApprovalSubmit={handleApprovalSubmit}
-                isLoading={isLoading}
-        
-              />
-            ))}
-
-            {/* Dynamic spacer to allow scrolling latest message to top */}
-            {chatHistory.length > 0 && spacerHeight > 0 && (
-              <Box sx={{ height: spacerHeight }} />
-            )}
-          </Box>
-        </Box>
+          )}
+        </FileDropZone>
       </Box>
-
-      {/* Mobile bottom input */}
-      {isMobile && showTextField && (
-        <Box
-          sx={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            backgroundColor: isDarkBg ? "rgba(26, 26, 26, 0.95)" : "rgba(255, 255, 255, 0.95)",
-            backdropFilter: "blur(10px)",
-            borderTop: `1px solid ${isDarkBg ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.08)"}`,
-            px: 2,
-            py: 1,
-            zIndex: 50,
-          }}
-        >
-          <ChatInput
-            ref={inputRef}
-            onSubmit={handleSubmit}
-            onStop={stopGeneration}
-            placeholder={uiSettings.inputPlaceholder}
-            fontSize={mobileInputFontSizes}
-            disabled={isLoading || isLoadingConversation}
-            isLoading={isLoading}
-            compact
-            models={filteredModels}
-            selectedModel={selectedModel}
-            onModelChange={handleModelChange}
-            accentColor={iconTint}
-            isDarkBg={isDarkBg}
-          />
-        </Box>
-      )}
 
       {/* Error Snackbar */}
       <Snackbar

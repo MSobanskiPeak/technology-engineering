@@ -20,6 +20,7 @@ export const darkCssVars = {
   "--dm-subtle": DARK_SUBTLE,
   "--dm-overlay-opacity": "1",
   "--dm-success-text": "#81c784",
+  "--dm-user-bubble": "rgba(255,255,255,0.08)",
 };
 
 export const lightCssVars = {
@@ -32,6 +33,7 @@ export const lightCssVars = {
   "--dm-subtle": "rgba(0,0,0,0.03)",
   "--dm-overlay-opacity": "0",
   "--dm-success-text": "#2e7d32",
+  "--dm-user-bubble": "rgba(0,0,0,0.05)",
 };
 
 export const darkModeOverrides = {

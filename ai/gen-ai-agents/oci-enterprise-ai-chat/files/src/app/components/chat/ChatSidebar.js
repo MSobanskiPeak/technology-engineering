@@ -1,35 +1,20 @@
 "use client";
 
-import { Box, IconButton, Typography } from "@mui/material";
-import { AnimatePresence, motion } from "framer-motion";
-import { Settings, Upload } from "lucide-react";
-import { useBaseRouter as useRouter } from "@/lib/useBaseRouter";
-import BlinkingEye from "../ui/BlinkingEye";
-import { memo, useState, useCallback, useRef, useEffect } from "react";
-import TypingEffect from "../ui/TypingEffect";
+import { Box, IconButton, Tooltip, Typography } from "@mui/material";
+import { History, PanelLeftClose, PanelLeftOpen, SquarePen } from "lucide-react";
+import { memo } from "react";
 import ScrollableList from "../ui/ScrollableList";
-import OracleLogo from "../ui/OracleLogo";
-import ChatInput, { TEXT_EXTENSIONS } from "./ChatInput";
 
-const fontSizes = { xs: "1.5rem", sm: "1.8rem", md: "2rem" };
-const textFieldFontSizes = { xs: "1.1rem", sm: "1.3rem", md: "1.5rem" };
+export const SIDEBAR_WIDTH = 272;
+export const SIDEBAR_COLLAPSED_WIDTH = 64;
 
-const commonTextStyles = {
-  fontSize: fontSizes,
-  fontWeight: 300,
-  textAlign: "left",
-  lineHeight: 1.4,
-  margin: 0,
-};
-
+// Navigation rail: a full sidebar when expanded, an icon-only rail when
+// collapsed. Icons stay clickable in both states.
 const ChatSidebar = memo(function ChatSidebar({
-  uiSettings,
-  showTextField,
-  chatHistoryLength,
-  inputRef,
-  onSubmit,
-  onStop,
-  recentConversations,
+  collapsed = false,
+  onToggleCollapsed,
+  onNewConversation,
+  recentConversations = [],
   loadingConversations = false,
   hasMoreConversations = false,
   isLoadingMoreConversations = false,
@@ -38,266 +23,88 @@ const ChatSidebar = memo(function ChatSidebar({
   onConversationClick,
   onConversationDelete,
   onRefreshConversations,
-  isLoading = false,
-  width = 30,
-  selectedModel,
-
   accentColor = "#C74634",
-  iconTint,
   isDarkBg = false,
 }) {
-  const router = useRouter();
-  const [isDragging, setIsDragging] = useState(false);
-  const [attachmentCount, setAttachmentCount] = useState(0);
-  const inputWrapperRef = useRef(null);
-  const dragCounterRef = useRef(0);
+  const bgColor = isDarkBg ? "#202020" : "#fafafa";
+  const iconColor = isDarkBg ? "rgba(255,255,255,0.6)" : "rgba(0, 0, 0, 0.55)";
+  const hoverBg = isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0, 0, 0, 0.04)";
 
-  // Warm up the settings route while the user is still chatting — router.push
-  // from a click has no automatic prefetch (unlike <Link>), so without this the
-  // gear icon paid the full RSC + chunk download on click.
-  useEffect(() => {
-    router.prefetch?.("/settings");
-  }, [router]);
+  const navItemSx = {
+    display: "flex",
+    alignItems: "center",
+    gap: 1.5,
+    height: 40,
+    px: "10px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    color: iconColor,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    "&:hover": { backgroundColor: hoverBg },
+  };
 
-  const isValidFile = useCallback((file) => {
-    return file.type.startsWith('image/') ||
-      file.type.startsWith('text/') ||
-      file.type === 'application/pdf' ||
-      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-      file.type === 'application/vnd.ms-excel' ||
-      file.name.toLowerCase().endsWith('.pdf') ||
-      /\.(xlsx|xls)$/i.test(file.name) ||
-      TEXT_EXTENSIONS.some(ext => file.name.toLowerCase().endsWith(ext));
-  }, []);
+  const labelSx = {
+    fontSize: "0.9rem",
+    fontWeight: 400,
+    color: isDarkBg ? "rgba(255,255,255,0.85)" : "rgba(0, 0, 0, 0.8)",
+    opacity: collapsed ? 0 : 1,
+    transition: "opacity 0.15s ease",
+  };
 
-  const handleDragEnter = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounterRef.current++;
-
-    // Check if dragging files
-    if (e.dataTransfer?.types?.includes('Files')) {
-      setIsDragging(true);
-    }
-  }, []);
-
-  const handleDragLeave = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounterRef.current--;
-    if (dragCounterRef.current === 0) {
-      setIsDragging(false);
-    }
-  }, []);
-
-  const handleDragOver = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, []);
-
-  const handleDrop = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    dragCounterRef.current = 0;
-
-    const files = e.dataTransfer?.files;
-    if (files?.length > 0 && inputRef?.current?.addFiles) {
-      // Filter valid files
-      const validFiles = Array.from(files).filter(isValidFile);
-      if (validFiles.length > 0) {
-        inputRef.current.addFiles(validFiles);
-        inputRef.current.focus();
-      }
-    }
-  }, [inputRef, isValidFile]);
+  const navItem = (icon, label, onClick) => (
+    <Tooltip title={collapsed ? label : ""} placement="right">
+      <Box onClick={onClick} sx={navItemSx}>
+        {icon}
+        <Typography sx={labelSx}>{label}</Typography>
+      </Box>
+    </Tooltip>
+  );
 
   return (
     <Box
-      id="chat-sidebar-root"
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
+      component="nav"
       sx={{
-        flex: `0 0 ${width}%`,
-        minWidth: 0,
-        paddingTop: "10vh",
-        paddingLeft: 4,
-        paddingRight: 4,
+        width: collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH,
+        flexShrink: 0,
+        height: "100%",
         display: "flex",
         flexDirection: "column",
-        height: "100%",
-        position: "relative",
-        overflow: "visible",
-        clipPath: "inset(0px -4.5px 0px 0px)",
+        gap: 0.5,
+        px: 1.5,
+        py: 1.5,
+        backgroundColor: bgColor,
+        borderRight: `1px solid ${isDarkBg ? "rgba(255,255,255,0.08)" : "rgba(0, 0, 0, 0.08)"}`,
+        transition: "width 0.2s ease",
+        overflow: "hidden",
       }}
     >
-      {/* Drop overlay */}
-      <AnimatePresence>
-        {isDragging && (
-          <motion.div
-            id="chat-sidebar-drop-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            style={{
-              position: "absolute",
-              top: 16,
-              left: 16,
-              right: 16,
-              bottom: 16,
-              backgroundColor: "rgba(255, 255, 255, 0.85)",
-              border: "2px dashed rgba(0, 0, 0, 0.2)",
-              borderRadius: 12,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              zIndex: 100,
-              pointerEvents: "none",
-            }}
+      {/* Collapse toggle */}
+      <Box sx={{ display: "flex", justifyContent: collapsed ? "flex-start" : "flex-end", mb: 0.5 }}>
+        <Tooltip title={collapsed ? "Expand sidebar" : "Collapse sidebar"} placement="right">
+          <IconButton
+            onClick={onToggleCollapsed}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            sx={{ color: iconColor, borderRadius: "8px", "&:hover": { backgroundColor: hoverBg } }}
           >
-            <Upload size={32} style={{ color: "rgba(0, 0, 0, 0.3)" }} />
-            <Typography sx={{ color: "rgba(0, 0, 0, 0.5)", fontWeight: 500 }}>
-              Drop files here
-            </Typography>
-            <Typography sx={{ color: "rgba(0, 0, 0, 0.35)", fontSize: "0.8rem" }}>
-              Images and text files
-            </Typography>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Logo */}
-      <Box id="chat-sidebar-logo" sx={{ mb: 1 }}>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{
-            duration: 0.5,
-            delay: 0.1,
-            ease: [0.25, 0.46, 0.45, 0.94],
-          }}
-        >
-          {uiSettings.appLogo ? (
-            <img
-              src={uiSettings.appLogo}
-              alt="App Logo"
-              style={{
-                maxHeight: "50px",
-                width: "auto",
-                objectFit: "contain",
-                userSelect: "none",
-                ...(isDarkBg && { filter: "brightness(0) invert(1)", opacity: 0.85 }),
-              }}
-            />
-          ) : (
-            <OracleLogo accentColor={accentColor} isDarkBg={isDarkBg} maxHeight={100} />
-          )}
-        </motion.div>
+            {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+          </IconButton>
+        </Tooltip>
       </Box>
 
-      {/* Welcome message - only shows when no chat history and no attachments */}
-      <AnimatePresence>
-        {chatHistoryLength === 0 && attachmentCount === 0 && (
-          <motion.div
-            initial={{ opacity: 1, height: "auto" }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0 }}
-            transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-            style={{ overflow: "hidden" }}
-          >
-            <Box id="chat-sidebar-message" sx={{ minHeight: "100px" }}>
-              <TypingEffect text="Hey," speed={50}>
-                {(displayedText) => (
-                  <Typography
-                    variant="h3"
-                    sx={{
-                      ...commonTextStyles,
-                      minHeight: "40px",
-                      color: isDarkBg ? "#e5e5e5" : "#000000",
-                    }}
-                  >
-                    {displayedText}
-                  </Typography>
-                )}
-              </TypingEffect>
-              <TypingEffect
-                text={uiSettings.welcomeMessage}
-                speed={50}
-                delay={200}
-              >
-                {(displayedText) => (
-                  <Typography
-                    variant="h3"
-                    sx={{
-                      ...commonTextStyles,
-                      minHeight: "40px",
-                      color: isDarkBg ? "#e5e5e5" : "#000000",
-                    }}
-                  >
-                    {displayedText}
-                  </Typography>
-                )}
-              </TypingEffect>
-            </Box>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {navItem(<SquarePen size={20} style={{ flexShrink: 0 }} />, "New conversation", onNewConversation)}
 
-      {/* Chat Input */}
-      <AnimatePresence>
-        {showTextField && (
-          <motion.div
-            ref={inputWrapperRef}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.6,
-              ease: [0.25, 0.46, 0.45, 0.94],
-            }}
-          >
-            <ChatInput
-              ref={inputRef}
-              onSubmit={onSubmit}
-              onStop={onStop}
-              placeholder={uiSettings.inputPlaceholder}
-              fontSize={textFieldFontSizes}
-              disabled={isLoading}
-              isLoading={isLoading}
-              selectedModel={selectedModel}
-              accentColor={iconTint}
-              isDarkBg={isDarkBg}
-              onAttachmentsChange={setAttachmentCount}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Bottom section - Recent conversations + Settings */}
-      <Box
-        id="chat-sidebar-bottom"
-        sx={{
-          marginTop: "auto",
-          flexShrink: 0,
-          maxHeight: "320px",
-          maxWidth: "200px",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-      >
-        {/* Recent conversations */}
-        <Box sx={{ flex: 1, overflow: "hidden" }}>
+      {/* Conversation history — an icon that expands the sidebar when collapsed */}
+      {collapsed ? (
+        navItem(<History size={20} style={{ flexShrink: 0 }} />, "Conversation history", onToggleCollapsed)
+      ) : (
+        <Box sx={{ flex: 1, minHeight: 0, display: "flex", px: "10px", mt: 1 }}>
           <ScrollableList
-            title="Recent conversations"
+            title="Conversations"
             titleDelay={0}
-            bgColor={isDarkBg ? "#1a1a1a" : "white"}
+            fill
+            bgColor={bgColor}
             isDarkBg={isDarkBg}
-
             accentColor={accentColor}
             items={recentConversations}
             initialLoading={loadingConversations}
@@ -314,24 +121,7 @@ const ChatSidebar = memo(function ChatSidebar({
             onLoadMore={onLoadMoreConversations}
           />
         </Box>
-
-        {/* Settings icon */}
-        <Box sx={{ flexShrink: 0, paddingBottom: "2rem" }}>
-          <IconButton
-            onClick={() => router.push("/settings")}
-            sx={{
-              color: isDarkBg ? "rgba(255,255,255,0.4)" : "rgba(0, 0, 0, 0.3)",
-              p: 1,
-              "&:hover": {
-                backgroundColor: isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0, 0, 0, 0.04)",
-                color: isDarkBg ? "rgba(255,255,255,0.6)" : "rgba(0, 0, 0, 0.5)",
-              },
-            }}
-          >
-            <Settings sx={{ fontSize: "1.2rem" }} />
-          </IconButton>
-        </Box>
-      </Box>
+      )}
     </Box>
   );
 });
