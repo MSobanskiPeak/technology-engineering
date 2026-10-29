@@ -141,7 +141,7 @@ export default function GeneralTab() {
                   isDarkBg={isDarkBg}
                 />
 
-                {/* Body: sidebar + chat */}
+                {/* Body: sidebar + divider + chat */}
                 <Box sx={{ display: "flex", flex: 1, pt: "60px", height: "100%", boxSizing: "border-box" }}>
                   {/* Real ChatSidebar */}
                   <ChatSidebar
@@ -170,7 +170,7 @@ export default function GeneralTab() {
                     gap: 2,
                     color: isDarkBg ? "#e5e5e5" : "inherit",
                   }}>
-                    <Box sx={{ maxWidth: 800, width: "100%", mx: "auto" }}>
+                    <Box sx={{ maxWidth: 700 }}>
                       {/* User message */}
                       <Typography sx={{
                         textAlign: "right",

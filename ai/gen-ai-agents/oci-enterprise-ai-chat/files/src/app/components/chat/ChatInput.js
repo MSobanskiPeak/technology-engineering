@@ -1,8 +1,8 @@
 "use client";
 
-import { KeyboardReturn } from "@mui/icons-material";
 import { Badge, Box, Chip, IconButton, ListSubheader, Menu, MenuItem, TextField, Tooltip, Typography, Divider, Dialog, DialogContent } from "@mui/material";
-import { ChevronDown, ChevronUp, ChevronRight, Paperclip, ImagePlus, FileText, Wrench, Settings, X, FileText as TextIcon, Search, FileSearch, Database, Plug, Puzzle, Presentation, FolderOpen, Terminal, Brain, Copy, Check, CircleStop } from "lucide-react";
+import { GrOracle } from "react-icons/gr";
+import { ArrowUp, ChevronDown, ChevronUp, ChevronRight, Plus, Wrench, ImagePlus, FileText, Settings, X, FileText as TextIcon, Search, FileSearch, Database, Plug, Puzzle, Presentation, FolderOpen, Terminal, Brain, Copy, Check, CircleStop } from "lucide-react";
 
 
 const BrainFreezeIcon = ({ size = 16, color = "currentColor", style }) => (
@@ -72,7 +72,7 @@ const ChatInput = memo(forwardRef(function ChatInput({
   isDarkBg = false,
   onAttachmentsChange,
 }, ref) {
-  const iconColor = accentColor || (isDarkBg ? "rgba(255,255,255,0.5)" : "rgba(0, 0, 0, 0.4)");
+  const iconColor = accentColor || (isDarkBg ? "rgba(255,255,255,0.85)" : "rgba(0, 0, 0, 0.6)");
   const iconOpacity = 1;
   const [value, setValue] = useState("");
   const [attachMenuAnchor, setAttachMenuAnchor] = useState(null);
@@ -621,8 +621,10 @@ const ChatInput = memo(forwardRef(function ChatInput({
         )}
       </AnimatePresence>
 
-      {/* Input row */}
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, flex: 1 }}>
+      {/* Input: Oracle mark + text field on top, action buttons right-aligned below */}
+      <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+        <GrOracle size={22} color="#e8562f" aria-hidden="true" style={{ flexShrink: 0, marginTop: 5 }} />
         <TextField
           inputRef={localInputRef}
           autoFocus
@@ -648,25 +650,25 @@ const ChatInput = memo(forwardRef(function ChatInput({
             },
           }}
         />
-        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.5 }}>
-          <Tooltip title="Attach" placement="left">
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.5, mt: 1 }}>
+          <Tooltip title="Attach" placement="top">
             <IconButton
               onClick={(e) => setAttachMenuAnchor(e.currentTarget)}
               sx={{
                 color: iconColor,
                 opacity: 1,
-                marginTop: "4px",
                 "&:hover": { backgroundColor: isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0, 0, 0, 0.04)" },
               }}
               size="medium"
             >
-              <Paperclip style={{ fontSize: "1.5rem" }} />
+              <Plus size={22} />
             </IconButton>
           </Tooltip>
           {/* Model selector (mobile compact mode) */}
           {models && onModelChange && (
             <>
-              <Tooltip title={selectedModel?.replace(/^[a-z]+\./, "") || "Select model"} placement="left">
+              <Tooltip title={selectedModel?.replace(/^[a-z]+\./, "") || "Select model"} placement="top">
                 <IconButton
                   onClick={(e) => setModelMenuAnchor(e.currentTarget)}
                   sx={{
@@ -746,7 +748,7 @@ const ChatInput = memo(forwardRef(function ChatInput({
             const visibleServers = badgeAppMode === 'client' ? servers.filter(s => !s.isAddon) : servers;
             const totalTools = nativeTools.length + visibleServers.length;
             return (
-              <Tooltip title="Tools" placement="left">
+              <Tooltip title="Tools" placement="top">
                 <IconButton
                   onClick={(e) => setToolsMenuAnchor(e.currentTarget)}
                   sx={{
@@ -756,7 +758,7 @@ const ChatInput = memo(forwardRef(function ChatInput({
                   }}
                   size="medium"
                 >
-                  <Wrench style={{ fontSize: "1.5rem" }} />
+                  <Wrench size={20} />
                 </IconButton>
               </Tooltip>
             );
@@ -764,7 +766,7 @@ const ChatInput = memo(forwardRef(function ChatInput({
           {/* Thinking effort selector — only for reasoning models */}
           {isReasoningModel && (
             <>
-              <Tooltip title={`Thinking: ${reasoningEffort}`} placement="left">
+              <Tooltip title={`Thinking: ${reasoningEffort}`} placement="top">
                 <IconButton
                   onClick={(e) => setThinkingMenuAnchor(e.currentTarget)}
                   sx={{
@@ -845,7 +847,7 @@ const ChatInput = memo(forwardRef(function ChatInput({
               </Menu>
             </>
           )}
-          <Tooltip title={isLoading ? "Stop generating" : "Send message"} placement="left" disableHoverListener={!isLoading && !canSubmit}>
+          <Tooltip title={isLoading ? "Stop generating" : "Send message"} placement="top" disableHoverListener={!isLoading && !canSubmit}>
             <IconButton
               sx={isLoading ? {
                 color: iconColor,
@@ -854,7 +856,8 @@ const ChatInput = memo(forwardRef(function ChatInput({
                 "&:hover": { backgroundColor: isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0, 0, 0, 0.04)" },
               } : {
                 color: iconColor,
-                opacity: canSubmit ? 1 : 0,
+                // Dimmed (not hidden) until there is something to send
+                opacity: canSubmit ? 1 : 0.35,
                 pointerEvents: canSubmit ? "auto" : "none",
                 transition: "opacity 0.3s ease-in-out",
                 "&:hover": { backgroundColor: isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0, 0, 0, 0.04)" },
@@ -865,7 +868,7 @@ const ChatInput = memo(forwardRef(function ChatInput({
               {isLoading ? (
                 <CircleStop size={20} />
               ) : (
-                <KeyboardReturn sx={{ fontSize }} />
+                <ArrowUp size={20} />
               )}
             </IconButton>
           </Tooltip>

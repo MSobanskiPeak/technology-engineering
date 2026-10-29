@@ -56,17 +56,17 @@ const ChatComposer = memo(function ChatComposer({
               transition={{ duration: 0.25, ease: EASE }}
               style={{ overflow: "hidden" }}
             >
-              <Box sx={{ mb: 3, minHeight: { xs: 72, md: 88 } }}>
-                <TypingEffect text="Hey," speed={50}>
+              <Box sx={{ minHeight: { xs: 72, md: 88 } }}>
+                <TypingEffect text="Nice to see you" speed={50}>
                   {(displayedText) => (
-                    <Typography sx={{ fontSize: { xs: "1.6rem", md: "2rem" }, fontWeight: 300, lineHeight: 1.3, color: textColor }}>
+                    <Typography sx={{ mb: 2, fontSize: { xs: "1.6rem", md: "2rem" }, fontWeight: 300, lineHeight: 1.3, color: textColor }}>
                       {displayedText}
                     </Typography>
                   )}
                 </TypingEffect>
                 <TypingEffect text={welcomeMessage} speed={50} delay={200}>
                   {(displayedText) => (
-                    <Typography sx={{ fontSize: { xs: "1.6rem", md: "2rem" }, fontWeight: 300, lineHeight: 1.3, color: textColor }}>
+                    <Typography sx={{ fontSize: { xs: "1rem", md: "1.2rem" }, fontWeight: 300, lineHeight: 1.3, color: textColor }}>
                       {displayedText}
                     </Typography>
                   )}
