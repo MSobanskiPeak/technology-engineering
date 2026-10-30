@@ -2,7 +2,8 @@
 
 import { Box, Typography } from "@mui/material";
 import { AnimatePresence, motion } from "framer-motion";
-import { memo } from "react";
+import { CornerDownRight } from "lucide-react";
+import { memo, useEffect, useState } from "react";
 import TypingEffect from "../ui/TypingEffect";
 import ChatInput from "./ChatInput";
 
@@ -31,6 +32,15 @@ const ChatComposer = memo(function ChatComposer({
   isDarkBg = false,
 }) {
   const textColor = isDarkBg ? "#e5e5e5" : "#000000";
+  const [exampleQueries, setExampleQueries] = useState([]);
+
+  // Suggested prompts come from EXAMPLE_QUERIES in the server env
+  useEffect(() => {
+    fetch("/api/example-queries")
+      .then(res => (res.ok ? res.json() : { queries: [] }))
+      .then(({ queries = [] }) => setExampleQueries(queries))
+      .catch(() => { /* suggestions are optional */ });
+  }, []);
 
   return (
     <Box
@@ -102,6 +112,51 @@ const ChatComposer = memo(function ChatComposer({
             isDarkBg={isDarkBg}
           />
         </Box>
+
+        {/* Example queries — clicking one fills the input, it doesn't send */}
+        <AnimatePresence initial={false}>
+          {centered && exampleQueries.length > 0 && (
+            <motion.div
+              key="examples"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: EASE }}
+              style={{ overflow: "hidden" }}
+            >
+              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5, mt: 2, px: 0.5 }}>
+                {exampleQueries.map((query) => (
+                  <Box
+                    key={query}
+                    component="button"
+                    type="button"
+                    onClick={() => inputRef?.current?.setValue?.(query)}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      px: 1,
+                      py: 0.5,
+                      border: "none",
+                      borderRadius: "6px",
+                      background: "none",
+                      cursor: "pointer",
+                      font: "inherit",
+                      fontSize: "0.9rem",
+                      fontWeight: 500,
+                      textAlign: "left",
+                      color: isDarkBg ? "rgba(255,255,255,0.85)" : "rgba(0, 0, 0, 0.75)",
+                      "&:hover": { backgroundColor: isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0, 0, 0, 0.04)" },
+                    }}
+                  >
+                    <CornerDownRight size={15} style={{ flexShrink: 0 }} />
+                    {query}
+                  </Box>
+                ))}
+              </Box>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </Box>
   );

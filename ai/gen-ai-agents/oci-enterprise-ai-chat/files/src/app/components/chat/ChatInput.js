@@ -320,6 +320,16 @@ const ChatInput = memo(forwardRef(function ChatInput({
       setAttachedTexts([]);
     },
     getValue: () => value,
+    // Fill the box (without sending) and put the cursor at the end
+    setValue: (text) => {
+      setValue(text);
+      requestAnimationFrame(() => {
+        const el = localInputRef.current;
+        if (!el) return;
+        el.focus();
+        el.setSelectionRange(text.length, text.length);
+      });
+    },
     getSessionActiveServers: () => servers.filter(s => !sessionDisabledServers.has(s.id)).map(s => s.id),
     getAttachedImages: () => attachedImages,
     getAttachedTexts: () => attachedTexts,

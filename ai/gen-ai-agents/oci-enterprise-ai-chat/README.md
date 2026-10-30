@@ -92,6 +92,14 @@ AGENT_HUB_AGENTS='[{"name":"finance","url":"https://gateway.aidp.<region>.oci.or
 
 Each agent shows up in the model picker as `agenthub.<name>`. Chats with it go through `/api/a2a`, which signs requests with the same OCI credentials as the rest of the app, reads the agent card (`<endpoint>/agent-card.json`) and streams the answer over A2A (`message/stream`, or `message/send` when the card says the agent doesn't stream). The agent uses its own instructions and tools, so the app's system prompt and tool settings don't apply to it. Progress updates from the agent appear in the reasoning panel. The deployment must be **published for A2A** in Agent Hub, and when running on OCI the app's dynamic group needs permission to invoke the agent endpoint.
 
+### Example queries, optional
+
+Suggested prompts shown under the input on an empty chat. Clicking one fills the input without sending it.
+
+```bash
+EXAMPLE_QUERIES='["Categorize my agents","What problems can my agents solve?"]'
+```
+
 ### OCI Generative AI Hosted Deployments, optional
 
 When the app is deployed via OCI Generative AI Hosted Applications, the platform injects `APPLICATION_BASE_URL` (the full invocation prefix) into the container. `entrypoint.sh` honors it automatically and falls back to a manual `BASE_PATH=/your-path` for non-hosted deployments behind a subpath. Nothing to set if you do not use either.
