@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, IconButton, Tooltip, Typography } from "@mui/material";
-import { History, PanelLeftClose, PanelLeftOpen, SquarePen } from "lucide-react";
+import { History, PanelLeftClose, PanelLeftOpen, Settings, SquarePen } from "lucide-react";
 import { memo } from "react";
 import ScrollableList from "../ui/ScrollableList";
 
@@ -14,6 +14,7 @@ const ChatSidebar = memo(function ChatSidebar({
   collapsed = false,
   onToggleCollapsed,
   onNewConversation,
+  onOpenSettings,
   recentConversations = [],
   loadingConversations = false,
   hasMoreConversations = false,
@@ -120,6 +121,13 @@ const ChatSidebar = memo(function ChatSidebar({
             isLoadingMore={isLoadingMoreConversations}
             onLoadMore={onLoadMoreConversations}
           />
+        </Box>
+      )}
+
+      {/* Settings — pinned to the bottom in both states */}
+      {onOpenSettings && (
+        <Box sx={{ mt: "auto", pt: 1 }}>
+          {navItem(<Settings size={20} style={{ flexShrink: 0 }} />, "Settings", onOpenSettings)}
         </Box>
       )}
     </Box>

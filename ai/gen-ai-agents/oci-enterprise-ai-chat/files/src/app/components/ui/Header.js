@@ -2,7 +2,7 @@
 
 import { Avatar, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, ListItemIcon, ListSubheader, Menu, MenuItem, Skeleton, Tooltip, Typography } from "@mui/material";
 import { AnimatePresence, motion } from "framer-motion";
-import { Building2, Check, ChevronDown, ClipboardCopy, Download, LogOut, Menu as MenuIcon, Settings, Share2, SquarePen, Users, X } from "lucide-react";
+import { Building2, Check, ChevronDown, ClipboardCopy, Download, LogOut, Menu as MenuIcon, Share2, SquarePen, Users, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { GrOracle } from "react-icons/gr";
 import BubbleModelSelector from "./BubbleModelSelector";
@@ -20,7 +20,6 @@ export default function Header({
   onModelChange,
   loadingModels,
   onNewConversation,
-  onOpenSettings,
   isMobile = false,
   onMenuToggle,
   chatHistory = [],
@@ -338,25 +337,6 @@ export default function Header({
             <SquarePen size={20} />
           </IconButton>
         </Tooltip>
-
-        {/* Settings - desktop only (mobile has it in the drawer) */}
-        {!isMobile && onOpenSettings && (
-          <Tooltip title="Settings" placement="bottom">
-            <IconButton
-              onClick={onOpenSettings}
-              sx={{
-                color: isDarkBg ? "rgba(255,255,255,0.5)" : "rgba(0, 0, 0, 0.4)",
-                backgroundColor: "transparent",
-                "&:hover": {
-                  backgroundColor: isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
-                  color: isDarkBg ? "rgba(255,255,255,0.7)" : "rgba(0, 0, 0, 0.6)",
-                },
-              }}
-            >
-              <Settings size={20} />
-            </IconButton>
-          </Tooltip>
-        )}
 
         {/* User avatar - desktop only. Skeleton only when auth is on. */}
         {!isMobile && loadingUser && authEnabled !== false && (

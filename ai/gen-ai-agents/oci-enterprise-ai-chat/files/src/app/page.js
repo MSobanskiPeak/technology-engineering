@@ -441,7 +441,6 @@ export default function Home({ initialConversationId = null }) {
         onModelChange={handleModelChange}
         loadingModels={loadingModels}
         onNewConversation={handleNewConversation}
-        onOpenSettings={() => router.push("/settings")}
         isMobile={isMobile}
         onMenuToggle={() => setMobileDrawerOpen(true)}
         chatHistory={chatHistory}
@@ -628,6 +627,7 @@ export default function Home({ initialConversationId = null }) {
             collapsed={sidebarCollapsed}
             onToggleCollapsed={toggleSidebar}
             onNewConversation={handleNewConversation}
+            onOpenSettings={() => router.push("/settings")}
             recentConversations={recentConversations}
             loadingConversations={loadingConversations}
             hasMoreConversations={hasMoreConversations}
