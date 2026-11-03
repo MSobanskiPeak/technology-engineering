@@ -98,8 +98,8 @@ const createGenaiAgentService = () => {
   };
 
   // Agent Hub agents (model id "agenthub.<name>") are reached through one of two routes:
-  // - 'chat': /api/agent-chat — the deployment's /chat endpoint (faster). The app
-  //   sends the conversation history with every message.
+  // - 'chat': /api/agent-chat — the deployment's /chat endpoint (faster). The agent
+  //   keeps the thread in a session tied to this conversation (x-session-id).
   // - 'a2a':  /api/a2a — the A2A protocol. The agent keeps the thread (contextId).
   // Either way the agent only gets the user's message; with widgets on, the
   // route turns its answer into widgets with a formatting model.
@@ -127,8 +127,7 @@ const createGenaiAgentService = () => {
   };
 
   // Agent turns don't go through the Responses API, so OCI's Conversation Store
-  // never sees them. Save the exchange there so reloading the chat shows it
-  // (and so /api/agent-chat can send it back to the agent as history).
+  // never sees them. Save the exchange there so reloading the chat shows it.
   const saveAgentHubExchange = async (convId, input, answer) => {
     try {
       const res = await fetch(`${API_BASE_URL}/conversations?addItemTo=${convId}`, {

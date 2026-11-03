@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { ociRequest, ociSignedFetch } from '../../lib/oci-proxy';
+import { createHash } from 'crypto';
+import { ociSignedFetch } from '../../lib/oci-proxy';
 import { createLogger } from '../../lib/logger';
 import { findAgent, readSseEvents } from '../../lib/agent-hub';
 import { createAgentOutput } from '../../lib/agent-formatter';
@@ -12,14 +13,15 @@ import { createAgentOutput } from '../../lib/agent-formatter';
 // What the endpoint does (found by testing, not documented):
 // - Accepts Responses-style input: {input: [{type:'message', role, content:[{type:'input_text'|'output_text', text}]}]}
 // - Ignores `instructions` and system/developer messages — the agent's own prompt wins.
-// - Keeps no memory between calls: the conversation history is sent with every request.
+// - Keeps a session per `x-session-id` request header (a `sessionId` body field is
+//   ignored). Any UUID works and the first call creates the session, so the
+//   agent remembers earlier turns and keeps its MCP connections. Without the
+//   header every call starts a new session.
 // - Streams events that are all typed `response.created`, each carrying one text
 //   fragment in response.output[].content[] (status IN_PROGRESS), then a final
 //   event with the full text (status COMPLETED), then `[DONE]`.
 
 export const maxDuration = 300;
-
-const MAX_HISTORY_MESSAGES = 20;
 
 // Plain text of a chat input (string, or an array of input_text / input_image items).
 // Images are not sent: the agent endpoint only accepts text.
@@ -45,28 +47,13 @@ function textMessage(role, text) {
   };
 }
 
-// Earlier turns from OCI's Conversation Store (agent exchanges are saved there
-// by the client after each answer). OCI returns items newest first.
-async function loadHistory(conversationId, log) {
-  if (!conversationId) return [];
-  try {
-    const res = await ociRequest('GET', `/conversations/${conversationId}/items?limit=100`);
-    if (!res.ok) {
-      log.warn('Could not load conversation history', { status: res.status });
-      return [];
-    }
-    const { data = [] } = await res.json();
-    return [...data]
-      .reverse()
-      .filter(item => item.type === 'message' && (item.role === 'user' || item.role === 'assistant'))
-      .map(item => ({ role: item.role, text: inputToText(item.content) }))
-      .filter(m => m.text)
-      .slice(-MAX_HISTORY_MESSAGES)
-      .map(m => textMessage(m.role, m.text));
-  } catch (e) {
-    log.warn('Could not load conversation history', { error: e.message });
-    return [];
-  }
+// One agent session per chat + agent, derived from their ids so it needs no
+// storage and survives page reloads (UUID-shaped, as the gateway expects).
+function agentSessionId(conversationId, agentName) {
+  if (!conversationId) return null;
+  const h = createHash('sha256').update(`${conversationId}:${agentName}`).digest('hex');
+  const variant = (8 | (parseInt(h[16], 16) & 3)).toString(16);
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-${variant}${h.slice(17, 20)}-${h.slice(20, 32)}`;
 }
 
 function outputText(response) {
@@ -102,22 +89,26 @@ export async function POST(request) {
       return NextResponse.json({ error: `Unknown Agent Hub agent "${model}". Check AGENT_HUB_AGENTS.` }, { status: 400 });
     }
 
-    const history = await loadHistory(conversationId, log);
+    // The agent's session holds the earlier turns, so only the new message is sent.
+    const sessionId = agentSessionId(conversationId, agent.name);
     const body = {
       stream: true,
-      input: [...history, textMessage('user', userText)],
+      input: [textMessage('user', userText)],
     };
 
     log.info('Agent chat request', {
       agent: agent.name,
-      historyMessages: history.length,
+      sessionId,
       formatting: !!formatInstructions,
       droppedImages: Array.isArray(input) && input.some(i => i?.type === 'input_image'),
     });
 
     const upstream = await ociSignedFetch('POST', agent.chatUrl, {
       body,
-      extraHeaders: { accept: 'text/event-stream' },
+      extraHeaders: {
+        accept: 'text/event-stream',
+        ...(sessionId && { 'x-session-id': sessionId }),
+      },
       signal: request.signal,
     });
 
