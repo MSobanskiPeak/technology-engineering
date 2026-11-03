@@ -3,9 +3,10 @@
 import { Box, Typography } from "@mui/material";
 import { AnimatePresence, motion } from "framer-motion";
 import { CornerDownRight } from "lucide-react";
-import { memo, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import TypingEffect from "../ui/TypingEffect";
 import ChatInput from "./ChatInput";
+import ModelPicker from "./ModelPicker";
 
 export const FEED_MAX_WIDTH = 800;
 
@@ -26,6 +27,7 @@ const ChatComposer = memo(function ChatComposer({
   isLoading = false,
   disabled = false,
   models,
+  modelDescriptions,
   selectedModel,
   onModelChange,
   iconTint,
@@ -33,6 +35,31 @@ const ChatComposer = memo(function ChatComposer({
 }) {
   const textColor = isDarkBg ? "#e5e5e5" : "#000000";
   const [exampleQueries, setExampleQueries] = useState([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  const openPicker = useCallback(() => setPickerOpen(true), []);
+  const closePicker = useCallback(() => {
+    setPickerOpen(false);
+    inputRef?.current?.focus();
+  }, [inputRef]);
+  const handlePick = useCallback((model) => {
+    onModelChange?.(model);
+    closePicker();
+  }, [onModelChange, closePicker]);
+
+  // Opens below the input on the empty-chat screen and above it once docked at the bottom
+  const picker = pickerOpen && (
+    <Box sx={centered ? { mt: 1.5 } : { mb: 1.5 }}>
+      <ModelPicker
+        models={models}
+        descriptions={modelDescriptions}
+        selectedModel={selectedModel}
+        onSelect={handlePick}
+        onClose={closePicker}
+        isDarkBg={isDarkBg}
+      />
+    </Box>
+  );
 
   // Suggested prompts come from EXAMPLE_QUERIES in the server env
   useEffect(() => {
@@ -86,6 +113,8 @@ const ChatComposer = memo(function ChatComposer({
           )}
         </AnimatePresence>
 
+        {!centered && picker}
+
         <Box
           sx={{
             px: 2.5,
@@ -105,17 +134,18 @@ const ChatComposer = memo(function ChatComposer({
             fontSize={inputFontSizes}
             disabled={disabled}
             isLoading={isLoading}
-            models={models}
             selectedModel={selectedModel}
-            onModelChange={onModelChange}
+            onChooseModel={models?.length && onModelChange ? openPicker : undefined}
             accentColor={iconTint}
             isDarkBg={isDarkBg}
           />
         </Box>
 
+        {centered && picker}
+
         {/* Example queries — clicking one fills the input, it doesn't send */}
         <AnimatePresence initial={false}>
-          {centered && exampleQueries.length > 0 && (
+          {centered && !pickerOpen && exampleQueries.length > 0 && (
             <motion.div
               key="examples"
               initial={{ opacity: 0 }}

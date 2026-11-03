@@ -1,15 +1,8 @@
 "use client";
 
-import { Badge, Box, Chip, IconButton, ListSubheader, Menu, MenuItem, TextField, Tooltip, Typography, Divider, Dialog, DialogContent } from "@mui/material";
+import { Badge, Box, IconButton, Menu, MenuItem, TextField, Tooltip, Typography, Divider, Dialog, DialogContent } from "@mui/material";
 import { GrOracle } from "react-icons/gr";
-import { ArrowUp, ChevronDown, ChevronUp, ChevronRight, Plus, Wrench, ImagePlus, FileText, Settings, X, FileText as TextIcon, Search, FileSearch, Database, Plug, Puzzle, Presentation, FolderOpen, Terminal, Brain, Copy, Check, CircleStop } from "lucide-react";
-
-
-const BrainFreezeIcon = ({ size = 16, color = "currentColor", style }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" style={style}>
-    <path fill={color} d="M13 3c3.88 0 7 3.14 7 7c0 2.8-1.63 5.19-4 6.31V21H9v-3H8c-1.11 0-2-.89-2-2v-3H4.5c-.42 0-.66-.5-.42-.81L6 9.66A7.003 7.003 0 0 1 13 3m0-2C8.41 1 4.61 4.42 4.06 8.9L2.5 11h-.03l-.02.03c-.55.76-.62 1.76-.19 2.59c.36.69 1 1.17 1.74 1.32V16c0 1.85 1.28 3.42 3 3.87V23h11v-5.5c2.5-1.67 4-4.44 4-7.5c0-4.97-4.04-9-9-9m4.33 8.3l-1.96.51l1.44 1.46c.35.34.35.92 0 1.27s-.93.35-1.27 0l-1.45-1.44l-.52 1.96c-.12.49-.61.76-1.07.64a.91.91 0 0 1-.66-1.11l.53-1.96l-1.96.53a.91.91 0 0 1-1.11-.66c-.12-.45.16-.95.64-1.07l1.96-.52l-1.44-1.45a.9.9 0 0 1 1.27-1.27l1.46 1.44l.51-1.96c.12-.49.62-.77 1.09-.64c.49.13.77.62.64 1.1L14.9 8.1l1.97-.53c.48-.13.97.15 1.1.64c.13.47-.15.97-.64 1.09"/>
-  </svg>
-);
+import { ArrowUp, Bot, ChevronDown, Plus, Paperclip, Wrench, Settings, X, FileText as TextIcon, Search, FileSearch, Database, Plug, Puzzle, Presentation, FolderOpen, Terminal, Brain, Copy, Check, CircleStop } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect, memo, useCallback, useImperativeHandle, forwardRef, useRef } from "react";
 import { MCPService } from "../../services/mcpService";
@@ -65,9 +58,8 @@ const ChatInput = memo(forwardRef(function ChatInput({
   disabled = false,
   isLoading = false,
   compact = false,
-  models,
   selectedModel,
-  onModelChange,
+  onChooseModel,
   accentColor,
   isDarkBg = false,
   onAttachmentsChange,
@@ -87,9 +79,7 @@ const ChatInput = memo(forwardRef(function ChatInput({
   }, [attachedImages.length, attachedTexts.length, onAttachmentsChange]);
   const [textDialogOpen, setTextDialogOpen] = useState(null);
   const [imageDialogOpen, setImageDialogOpen] = useState(null);
-  const [modelMenuAnchor, setModelMenuAnchor] = useState(null);
   const localInputRef = useRef(null);
-  const imageInputRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const [nativeTools, setNativeTools] = useState([]);
@@ -350,7 +340,7 @@ const ChatInput = memo(forwardRef(function ChatInput({
 
   const handleChange = useCallback((e) => setValue(e.target.value), []);
 
-  const handleImageSelect = useCallback((e) => {
+  const handleFileSelect = useCallback((e) => {
     processFiles(e.target.files);
     e.target.value = '';
   }, [processFiles]);
@@ -426,10 +416,13 @@ const ChatInput = memo(forwardRef(function ChatInput({
     }
   }, [value, attachedImages, attachedTexts, canSubmit, onSubmit]);
 
-  const handleAddPhotos = useCallback(() => {
-    setAttachMenuAnchor(null);
-    imageInputRef.current?.click();
-  }, []);
+  const plusMenuItemSx = {
+    fontSize: "0.9rem",
+    gap: 1.25,
+    mx: 0.5,
+    borderRadius: 1,
+    "&:hover": { backgroundColor: isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)" },
+  };
 
   return (
     <Box
@@ -662,7 +655,37 @@ const ChatInput = memo(forwardRef(function ChatInput({
         />
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.5, mt: 1 }}>
-          <Tooltip title="Attach" placement="top">
+          {/* Current agent/model — opens the picker */}
+          {selectedModel && onChooseModel && (
+            <Box
+              component="button"
+              type="button"
+              onClick={onChooseModel}
+              sx={{
+                mr: "auto",
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+                px: 1,
+                py: 0.5,
+                border: "none",
+                borderRadius: "6px",
+                background: "none",
+                cursor: "pointer",
+                font: "inherit",
+                fontSize: "0.8rem",
+                color: isDarkBg ? "rgba(255,255,255,0.6)" : "rgba(0, 0, 0, 0.55)",
+                maxWidth: "50%",
+                "&:hover": { backgroundColor: isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0, 0, 0, 0.04)" },
+              }}
+            >
+              <Box component="span" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {selectedModel.replace(/^[a-z]+\./, "")}
+              </Box>
+              <ChevronDown size={14} style={{ flexShrink: 0 }} />
+            </Box>
+          )}
+          <Tooltip title="Attach or choose an agent" placement="top">
             <IconButton
               onClick={(e) => setAttachMenuAnchor(e.currentTarget)}
               sx={{
@@ -675,84 +698,6 @@ const ChatInput = memo(forwardRef(function ChatInput({
               <Plus size={22} />
             </IconButton>
           </Tooltip>
-          {/* Model selector (mobile compact mode) */}
-          {models && onModelChange && (
-            <>
-              <Tooltip title={selectedModel?.replace(/^[a-z]+\./, "") || "Select model"} placement="top">
-                <IconButton
-                  onClick={(e) => setModelMenuAnchor(e.currentTarget)}
-                  sx={{
-                    color: iconColor,
-                    opacity: iconOpacity,
-                    "&:hover": { backgroundColor: isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0, 0, 0, 0.04)" },
-                  }}
-                  size="medium"
-                >
-                  <BrainFreezeIcon size={24} color={iconColor} />
-                </IconButton>
-              </Tooltip>
-              <Menu
-                anchorEl={modelMenuAnchor}
-                open={Boolean(modelMenuAnchor)}
-                onClose={() => setModelMenuAnchor(null)}
-                PaperProps={{ sx: { maxHeight: 400 } }}
-              >
-                {(() => {
-                  const groups = {};
-                  models.forEach((m) => {
-                    const provider = m.split(".")[0];
-                    if (!groups[provider]) groups[provider] = [];
-                    groups[provider].push(m);
-                  });
-                  const providerLabels = { openai: "OpenAI", xai: "xAI", google: "Google", cohere: "Cohere", meta: "Meta" };
-                  return Object.entries(groups).flatMap(([provider, items]) => [
-                    <ListSubheader
-                      key={`ci-${provider}`}
-                      sx={{
-                        fontSize: "0.7rem",
-                        fontWeight: 700,
-                        color: "rgba(0,0,0,0.4)",
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        lineHeight: "28px",
-                        backgroundColor: "white",
-                      }}
-                    >
-                      {providerLabels[provider] || provider}
-                    </ListSubheader>,
-                    ...items.map((m) => (
-                      <MenuItem
-                        key={m}
-                        selected={selectedModel === m}
-                        onClick={() => {
-                          onModelChange(m);
-                          setModelMenuAnchor(null);
-                        }}
-                        sx={{ fontSize: "0.95rem", pl: 3, display: "flex", alignItems: "center", gap: 1, fontWeight: selectedModel === m ? 600 : 400 }}
-                      >
-                        {m.replace(/^[a-z]+\./, "")}
-                        {m === "google.gemini-2.5-pro" && (
-                          <Chip
-                            label="Recommended"
-                            size="small"
-                            sx={{
-                              fontSize: "0.6rem",
-                              height: 18,
-                              borderRadius: "4px",
-                              bgcolor: "rgba(25, 118, 210, 0.1)",
-                              color: "#1976d2",
-                              fontWeight: 600,
-                              letterSpacing: "0.03em",
-                            }}
-                          />
-                        )}
-                      </MenuItem>
-                    )),
-                  ]);
-                })()}
-              </Menu>
-            </>
-          )}
           {(() => {
             const badgeAppMode = typeof window !== 'undefined' ? (localStorage.getItem('appMode') || 'internal') : 'internal';
             const visibleServers = badgeAppMode === 'client' ? servers.filter(s => !s.isAddon) : servers;
@@ -883,38 +828,45 @@ const ChatInput = memo(forwardRef(function ChatInput({
             </IconButton>
           </Tooltip>
 
-          {/* Hidden file inputs */}
-          <input
-            ref={imageInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleImageSelect}
-            style={{ display: "none" }}
-          />
+          {/* Hidden file input (images and documents) */}
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,.txt,.md,.json,.csv,.xml,.html,.css,.js,.ts,.jsx,.tsx,.py,.java,.c,.cpp,.h,.yml,.yaml,.toml,.ini,.log,.sql,.sh,.bat,.xlsx,.xls"
+            accept="image/*,.pdf,.txt,.md,.json,.csv,.xml,.html,.css,.js,.ts,.jsx,.tsx,.py,.java,.c,.cpp,.h,.yml,.yaml,.toml,.ini,.log,.sql,.sh,.bat,.xlsx,.xls"
             multiple
-            onChange={(e) => { processFiles(e.target.files); e.target.value = ''; }}
+            onChange={handleFileSelect}
             style={{ display: "none" }}
           />
 
-          {/* Attach menu */}
+          {/* + menu: attach files or pick the agent/model */}
           <Menu
             anchorEl={attachMenuAnchor}
             open={Boolean(attachMenuAnchor)}
             onClose={() => setAttachMenuAnchor(null)}
+            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+            transformOrigin={{ vertical: "top", horizontal: "left" }}
+            slotProps={{
+              paper: {
+                sx: {
+                  mt: 0.5,
+                  minWidth: 160,
+                  backgroundColor: isDarkBg ? "#242424" : "#fff",
+                  color: isDarkBg ? "#e5e5e5" : "#1a1a1a",
+                  border: isDarkBg ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.08)",
+                },
+              },
+            }}
           >
-            <MenuItem onClick={handleAddPhotos} sx={{ fontSize: "0.9rem", gap: 1 }}>
-              <ImagePlus size={16} />
-              Add photos
+            <MenuItem onClick={() => { setAttachMenuAnchor(null); fileInputRef.current?.click(); }} sx={plusMenuItemSx}>
+              <Paperclip size={16} />
+              Upload files
             </MenuItem>
-            <MenuItem onClick={() => { setAttachMenuAnchor(null); fileInputRef.current?.click(); }} sx={{ fontSize: "0.9rem", gap: 1 }}>
-              <FileText size={16} />
-              Add files
-            </MenuItem>
+            {onChooseModel && (
+              <MenuItem onClick={() => { setAttachMenuAnchor(null); onChooseModel(); }} sx={plusMenuItemSx}>
+                <Bot size={16} />
+                Choose an agent
+              </MenuItem>
+            )}
           </Menu>
 
           {/* Tools menu */}

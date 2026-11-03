@@ -230,7 +230,7 @@ function inputText(input) {
 // GET — list configured agents so the UI can add them to the model picker.
 export async function GET() {
   return NextResponse.json({
-    agents: getAgents().map(a => ({ id: `${MODEL_PREFIX}${a.name}`, name: a.name })),
+    agents: getAgents().map(a => ({ id: `${MODEL_PREFIX}${a.name}`, name: a.name, description: a.description })),
   });
 }
 

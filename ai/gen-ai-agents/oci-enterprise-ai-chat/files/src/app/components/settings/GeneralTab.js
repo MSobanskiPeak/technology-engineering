@@ -129,11 +129,7 @@ export default function GeneralTab() {
               }}>
                 {/* Real Header */}
                 <Header
-                  models={["google.gemini-2.5-pro"]}
-                  selectedModel="google.gemini-2.5-pro"
-                  onModelChange={() => {}}
                   onNewConversation={() => {}}
-                  chatHistory={[]}
                   showLabChip={uiSettings.showLabChip !== false}
                   showLabIcon={uiSettings.showLabIcon !== false}
                   appTitle={uiSettings.appTitle}

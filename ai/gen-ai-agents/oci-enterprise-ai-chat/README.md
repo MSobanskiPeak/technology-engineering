@@ -90,6 +90,8 @@ When set, points the in-chat Text-to-SQL flow at a hosted DBTools MCP server tha
 AGENT_HUB_AGENTS='[{"name":"finance","url":"https://gateway.aidp.<region>.oci.oraclecloud.com/agentendpoint/<deployment-id>/a2a"},{"name":"hr","url":"https://gateway.aidp.<region>.oci.oraclecloud.com/agentendpoint/<other-id>/a2a"}]'
 ```
 
+Each agent can also have an optional `"description"`, which is shown next to its name in the agent picker (**+ → Choose an agent** in the input).
+
 Each agent shows up in the model picker as `agenthub.<name>`. Chats with it go through `/api/a2a`, which signs requests with the same OCI credentials as the rest of the app, reads the agent card (`<endpoint>/agent-card.json`) and streams the answer over A2A (`message/stream`, or `message/send` when the card says the agent doesn't stream). The agent uses its own instructions and tools, so the app's system prompt and tool settings don't apply to it. Progress updates from the agent appear in the reasoning panel. The deployment must be **published for A2A** in Agent Hub, and when running on OCI the app's dynamic group needs permission to invoke the agent endpoint.
 
 ### Example queries, optional

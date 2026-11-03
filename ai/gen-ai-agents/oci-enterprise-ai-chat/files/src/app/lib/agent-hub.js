@@ -8,7 +8,8 @@
 export const MODEL_PREFIX = 'agenthub.';
 
 // AGENT_HUB_AGENTS is a JSON array:
-//   [{"name":"finance","url":"https://gateway.../agentendpoint/<id>/a2a"}, ...]
+//   [{"name":"finance","url":"https://gateway.../agentendpoint/<id>/a2a","description":"..."}, ...]
+// `description` is optional and shown next to the name in the agent picker.
 // The URL can be the deployment's A2A or chat endpoint (or its base); both
 // endpoints are derived from it.
 function parseAgentConfig(raw) {
@@ -30,7 +31,12 @@ export function getAgents() {
     .filter(a => typeof a?.name === 'string' && typeof a?.url === 'string')
     .map(a => {
       const base = a.url.trim().replace(/\/+$/, '').replace(/\/(a2a|chat)$/, '');
-      return { name: a.name.trim(), url: `${base}/a2a`, chatUrl: `${base}/chat` };
+      return {
+        name: a.name.trim(),
+        description: typeof a.description === 'string' ? a.description.trim() : '',
+        url: `${base}/a2a`,
+        chatUrl: `${base}/chat`,
+      };
     })
     // Names become model ids ("agenthub.<name>"), so they must be unique.
     .filter(a => a.name && a.url.startsWith('https://') && !seen.has(a.name) && seen.add(a.name));

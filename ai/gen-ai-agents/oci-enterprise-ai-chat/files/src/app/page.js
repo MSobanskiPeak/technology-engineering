@@ -19,7 +19,7 @@ import {
   ThemeProvider,
   createTheme,
 } from "@mui/material";
-import { LogOut, Settings, Building2, Users } from "lucide-react";
+import { LogOut, Settings, SquarePen, Building2, Users } from "lucide-react";
 import { withBase } from "@/lib/withBase";
 import { useBaseRouter as useRouter } from "@/lib/useBaseRouter";
 import { useEffect, useState, useCallback } from "react";
@@ -117,7 +117,7 @@ export default function Home({ initialConversationId = null }) {
   // Model selection
   const [selectedModel, setSelectedModel] = useState("");
   const [models, setModels] = useState([]);
-  const [loadingModels, setLoadingModels] = useState(true);
+  const [modelDescriptions, setModelDescriptions] = useState({});
 
   const handleError = (message) => {
     setErrorSnackbar({ open: true, message });
@@ -266,7 +266,6 @@ export default function Home({ initialConversationId = null }) {
       setSelectedModel(defaultModel);
       localStorage.setItem("selectedModel", defaultModel);
     }
-    setLoadingModels(false);
 
     // Agent Hub agents (A2A) are configured server-side via AGENT_HUB_AGENTS and
     // appended as "agenthub.<name>" entries. A saved agent selection is restored
@@ -277,6 +276,7 @@ export default function Home({ initialConversationId = null }) {
         const agentIds = agents.map(a => a.id);
         if (agentIds.length === 0) return;
         setModels(prev => [...prev, ...agentIds.filter(id => !prev.includes(id))]);
+        setModelDescriptions(Object.fromEntries(agents.filter(a => a.description).map(a => [a.id, a.description])));
         if (agentIds.includes(savedModel)) {
           setSelectedModel(savedModel);
           localStorage.setItem("selectedModel", savedModel);
@@ -436,14 +436,9 @@ export default function Home({ initialConversationId = null }) {
 
       {/* Header */}
       <Header
-        models={filteredModels}
-        selectedModel={selectedModel}
-        onModelChange={handleModelChange}
-        loadingModels={loadingModels}
         onNewConversation={handleNewConversation}
         isMobile={isMobile}
         onMenuToggle={() => setMobileDrawerOpen(true)}
-        chatHistory={chatHistory}
         showLabChip={uiSettings.showLabChip !== false}
         showLabIcon={uiSettings.showLabIcon !== false}
         appTitle={uiSettings.appTitle}
@@ -488,6 +483,30 @@ export default function Home({ initialConversationId = null }) {
             ) : (
               <OracleLogo accentColor={accentForDark} isDarkBg={isDarkBg} maxHeight={100} />
             )}
+          </Box>
+
+          {/* New conversation */}
+          <Box
+            onClick={() => {
+              setMobileDrawerOpen(false);
+              handleNewConversation();
+            }}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              px: 1,
+              py: 1,
+              mb: 1,
+              cursor: "pointer",
+              borderRadius: 1,
+              "&:hover": { backgroundColor: isDarkBg ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.04)" },
+            }}
+          >
+            <SquarePen size={18} style={{ color: isDarkBg ? "rgba(255,255,255,0.5)" : "rgba(0, 0, 0, 0.4)" }} />
+            <Typography sx={{ fontSize: "0.85rem", color: isDarkBg ? "rgba(255,255,255,0.7)" : "rgba(0, 0, 0, 0.6)", fontWeight: 400 }}>
+              New conversation
+            </Typography>
           </Box>
 
           {/* Recent conversations */}
@@ -737,9 +756,10 @@ export default function Home({ initialConversationId = null }) {
               placeholder={uiSettings.inputPlaceholder}
               isLoading={isLoading}
               disabled={isLoading || isLoadingConversation}
-              models={isMobile ? filteredModels : undefined}
+              models={filteredModels}
+              modelDescriptions={modelDescriptions}
               selectedModel={selectedModel}
-              onModelChange={isMobile ? handleModelChange : undefined}
+              onModelChange={handleModelChange}
               iconTint={iconTint}
               isDarkBg={isDarkBg}
             />
