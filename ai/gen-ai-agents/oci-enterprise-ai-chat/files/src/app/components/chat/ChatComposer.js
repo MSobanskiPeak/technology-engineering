@@ -34,7 +34,7 @@ const ChatComposer = memo(function ChatComposer({
   isDarkBg = false,
 }) {
   const textColor = isDarkBg ? "#e5e5e5" : "#000000";
-  const [exampleQueries, setExampleQueries] = useState([]);
+  const [exampleConfig, setExampleConfig] = useState({ byModel: {}, default: [] });
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const openPicker = useCallback(() => setPickerOpen(true), []);
@@ -64,10 +64,19 @@ const ChatComposer = memo(function ChatComposer({
   // Suggested prompts come from EXAMPLE_QUERIES in the server env
   useEffect(() => {
     fetch("/api/example-queries")
-      .then(res => (res.ok ? res.json() : { queries: [] }))
-      .then(({ queries = [] }) => setExampleQueries(queries))
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => data && setExampleConfig({ byModel: data.byModel || {}, default: data.default || [] }))
       .catch(() => { /* suggestions are optional */ });
   }, []);
+
+  // The selected model's own list (by full id, or by name without the
+  // "agenthub."/"openai." prefix), else the default list
+  const exampleQueries = (() => {
+    if (!selectedModel) return exampleConfig.default;
+    const { byModel } = exampleConfig;
+    const shortName = selectedModel.replace(/^[a-z]+\./, "");
+    return byModel[selectedModel] || byModel[shortName] || exampleConfig.default;
+  })();
 
   return (
     <Box

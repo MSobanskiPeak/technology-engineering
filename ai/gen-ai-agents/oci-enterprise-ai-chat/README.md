@@ -98,8 +98,16 @@ Each agent shows up in the model picker as `agenthub.<name>`. Chats with it go t
 
 Suggested prompts shown under the input on an empty chat. Clicking one fills the input without sending it.
 
+A JSON array is shown for every model:
+
 ```bash
 EXAMPLE_QUERIES='["Categorize my agents","What problems can my agents solve?"]'
+```
+
+To show different prompts per agent or model, use a JSON object keyed by the agent name (as in `AGENT_HUB_AGENTS`) or the model id. The optional `"default"` list is shown for models that have no entry; without it, those models show no examples.
+
+```bash
+EXAMPLE_QUERIES='{"hr":["What is our headcount by region?"],"openai.gpt-oss-120b":["Summarise this file"],"default":["What can you do?"]}'
 ```
 
 ### OCI Generative AI Hosted Deployments, optional
