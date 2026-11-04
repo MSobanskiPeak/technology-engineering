@@ -162,6 +162,17 @@ export default function Home({ initialConversationId = null }) {
   // Drives the layout: centred composer on an empty chat, feed + docked composer otherwise
   const hasConversation = chatHistory.length > 0 || isLoadingConversation;
 
+  // Width of the feed's scrollbar gutter. The composer leaves the same space on
+  // its right so the input lines up with the feed.
+  const [scrollbarGutter, setScrollbarGutter] = useState(0);
+  useEffect(() => {
+    const feed = chatContainerRef.current;
+    if (!feed) return;
+    const observer = new ResizeObserver(() => setScrollbarGutter(feed.offsetWidth - feed.clientWidth));
+    observer.observe(feed);
+    return () => observer.disconnect();
+  }, [chatContainerRef]);
+
   const handleCloseSnackbar = (_event, reason) => {
     if (reason === "clickaway") return;
     setErrorSnackbar({ ...errorSnackbar, open: false });
@@ -683,10 +694,14 @@ export default function Home({ initialConversationId = null }) {
               minHeight: 0,
               overflowY: "auto",
               overflowX: "hidden",
+              // Keeps the width steady as the scrollbar appears
+              scrollbarGutter: "stable",
               position: "relative",
             }}
           >
             <Box sx={{
+              // Content width, like the composer: the padding sits outside it
+              boxSizing: "content-box",
               maxWidth: FEED_MAX_WIDTH,
               mx: "auto",
               px: { xs: 2, sm: 3 },
@@ -750,6 +765,7 @@ export default function Home({ initialConversationId = null }) {
           {showTextField && (
             <ChatComposer
               centered={!hasConversation}
+              scrollbarGutter={scrollbarGutter}
               welcomeMessage={uiSettings.welcomeMessage}
               inputRef={inputRef}
               onSubmit={handleSubmit}

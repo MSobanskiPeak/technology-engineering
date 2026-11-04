@@ -8,7 +8,7 @@ import TypingEffect from "../ui/TypingEffect";
 import ChatInput from "./ChatInput";
 import ModelPicker from "./ModelPicker";
 
-export const FEED_MAX_WIDTH = 800;
+export const FEED_MAX_WIDTH = 1000;
 
 const inputFontSizes = { xs: "1rem", md: "1.1rem" };
 const EASE = [0.25, 0.46, 0.45, 0.94];
@@ -19,6 +19,7 @@ const EASE = [0.25, 0.46, 0.45, 0.94];
 // attachments survive), and framer-motion's `layout` animates the move.
 const ChatComposer = memo(function ChatComposer({
   centered,
+  scrollbarGutter = 0,
   welcomeMessage,
   inputRef,
   onSubmit,
@@ -87,6 +88,8 @@ const ChatComposer = memo(function ChatComposer({
         justifyContent: centered ? "center" : "flex-end",
         px: { xs: 2, sm: 3 },
         pb: centered ? "12vh" : 2,
+        pt: "12px",
+        mr: `${scrollbarGutter}px`,
       }}
     >
       <motion.div
