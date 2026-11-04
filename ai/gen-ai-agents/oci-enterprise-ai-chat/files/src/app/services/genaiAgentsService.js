@@ -7,6 +7,17 @@ import { WIDGET_LAYOUT_PROMPT } from '../utils/widgetLayoutPrompt';
 import { CONCISE_SYSTEM_PROMPT } from '../utils/concisePrompt';
 import { MCPService } from './mcpService';
 
+// Agents get a widget click as plain text, not as §>key:value|key:value§
+const widgetResponseToText = (input) => {
+  const match = typeof input === 'string' && input.trim().match(/^§>(.+)§$/s);
+  if (!match) return input;
+  return match[1]
+    .split('|')
+    .filter(part => part !== '_action:custom')
+    .map(part => part.replace(/^(_action|custom):/, ''))
+    .join('\n');
+};
+
 const createGenaiAgentService = () => {
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_GENAI_API_URL || "http://localhost:3000/api";
@@ -169,6 +180,8 @@ const createGenaiAgentService = () => {
     // With widgets on, the route passes the agent's answer through a formatting
     // model that applies the widget prompts (the agent never sees them).
     if (isAgentHub) {
+      payload.input = widgetResponseToText(input);
+
       if (AGENT_HUB_TRANSPORT === 'a2a') {
         const contextId = getA2AContextId(conversationId, options.model);
         if (contextId) payload.contextId = contextId;

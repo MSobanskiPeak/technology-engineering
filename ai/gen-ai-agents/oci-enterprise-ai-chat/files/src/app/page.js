@@ -22,11 +22,12 @@ import {
 import { LogOut, Settings, SquarePen, Building2, Users } from "lucide-react";
 import { withBase } from "@/lib/withBase";
 import { useBaseRouter as useRouter } from "@/lib/useBaseRouter";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Header from "./components/ui/Header";
 import ChatMessage from "./components/chat/ChatMessage";
 import ChatSidebar from "./components/chat/ChatSidebar";
 import ChatComposer, { FEED_MAX_WIDTH } from "./components/chat/ChatComposer";
+import { TablePageContext, getTablePages } from "./utils/tablePaging";
 import FileDropZone from "./components/chat/FileDropZone";
 import ScrollableList from "./components/ui/ScrollableList";
 import OracleLogo from "./components/ui/OracleLogo";
@@ -161,6 +162,7 @@ export default function Home({ initialConversationId = null }) {
 
   // Drives the layout: centred composer on an empty chat, feed + docked composer otherwise
   const hasConversation = chatHistory.length > 0 || isLoadingConversation;
+  const tablePages = useMemo(() => getTablePages(chatHistory), [chatHistory]);
 
   // Width of the feed's scrollbar gutter. The composer leaves the same space on
   // its right so the input lines up with the feed.
@@ -735,23 +737,24 @@ export default function Home({ initialConversationId = null }) {
               )}
 
               {chatHistory.map((exchange, exchangeIndex) => (
-                <ChatMessage
-                  key={exchange.id}
-                  exchange={exchange}
-                  exchangeIndex={exchangeIndex}
-                  latestMessageRef={latestMessageRef}
-                  contentFontSizes={contentFontSizes}
-                  activeChips={activeChips}
-                  onChipChange={handleChipChange}
-                  copiedId={copiedId}
-                  onCopy={handleCopy}
-                  getCopyContent={getExchangeCopyContent}
-                  onWidgetSubmit={handleWidgetSubmit}
-                  onOptionSelect={handleOptionSelect}
-                  onRetry={handleRetry}
-                  onApprovalSubmit={handleApprovalSubmit}
-                  isLoading={isLoading}
-                />
+                <TablePageContext.Provider key={exchange.id} value={tablePages[exchangeIndex]}>
+                  <ChatMessage
+                    exchange={exchange}
+                    exchangeIndex={exchangeIndex}
+                    latestMessageRef={latestMessageRef}
+                    contentFontSizes={contentFontSizes}
+                    activeChips={activeChips}
+                    onChipChange={handleChipChange}
+                    copiedId={copiedId}
+                    onCopy={handleCopy}
+                    getCopyContent={getExchangeCopyContent}
+                    onWidgetSubmit={handleWidgetSubmit}
+                    onOptionSelect={handleOptionSelect}
+                    onRetry={handleRetry}
+                    onApprovalSubmit={handleApprovalSubmit}
+                    isLoading={isLoading}
+                  />
+                </TablePageContext.Provider>
               ))}
 
               {/* Dynamic spacer to allow scrolling latest message to top */}

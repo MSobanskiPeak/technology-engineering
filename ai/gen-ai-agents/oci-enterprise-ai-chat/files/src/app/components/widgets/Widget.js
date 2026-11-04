@@ -10,9 +10,10 @@ import {
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Quote, Code, List, Send,
   Volume2, Presentation, Maximize2, ExternalLink, Play, Copy
 } from "lucide-react";
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useContext, useEffect, useMemo } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { parseKey, INTERACTIVE_KEYS, CHART_KEYS } from "../../utils/widgetParser";
+import { TABLE_DOWNLOAD_ALL, TABLE_NEXT, TABLE_PREVIOUS, TablePageContext } from "../../utils/tablePaging";
 import { WidgetLineChart, WidgetBarChart, WidgetPieChart, WidgetDonutChart } from "./Charts";
 import {
   COLORS,
@@ -1434,8 +1435,19 @@ function WidgetTimeline({ props }) {
 
 // Table Widget - Shows structured data in rows and columns
 
-function WidgetTable({ props }) {
+// `message` is sent to the agent as the user's next message, the same way a poll option is
+const TABLE_ACTIONS = [
+  { label: 'Previous', message: TABLE_PREVIOUS, Icon: ArrowLeft },
+  { label: 'Next', message: TABLE_NEXT, Icon: ArrowRight },
+  { label: 'Download All', message: TABLE_DOWNLOAD_ALL, Icon: Download },
+];
+
+function WidgetTable({ props, onSubmit, disabled, selectedData, isComplete }) {
   const [copied, setCopied] = useState(false);
+  const [clickedAction, setClickedAction] = useState(null);
+  const tablePage = useContext(TablePageContext);
+  const selectedAction = clickedAction || (disabled ? selectedData?._action : null);
+  const actionsLocked = !!selectedAction || disabled || isComplete === false;
   const headers = [];
   const rowsRaw = [];
 
@@ -1495,6 +1507,12 @@ function WidgetTable({ props }) {
     URL.revokeObjectURL(url);
   }, [headers, rowsRaw, props.t]);
 
+  const handleAction = (message) => {
+    if (actionsLocked) return;
+    setClickedAction(message);
+    onSubmit({ _action: message }, props._id || null);
+  };
+
   if (columns.length === 0 && rows.length === 0) return null;
 
   return (
@@ -1510,12 +1528,44 @@ function WidgetTable({ props }) {
           width: '100%',
         }}
       >
-        <Box sx={{ px: 2.5, pt: 2, pb: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {props.t ? (
-            <Typography sx={{ fontSize: '1.1rem', fontWeight: 600, color: COLORS.text.primary, fontFamily: TYPOGRAPHY.fontFamily }}>
-              {props.t}
-            </Typography>
-          ) : <Box />}
+        <Box sx={{ px: 2.5, pt: 2, pb: 1.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+            {props.t && (
+              <Typography sx={{ fontSize: '1.1rem', fontWeight: 600, color: COLORS.text.primary, fontFamily: TYPOGRAPHY.fontFamily }}>
+                {props.t}
+              </Typography>
+            )}
+            {onSubmit && TABLE_ACTIONS.map(({ label, message, Icon }) => {
+              const isThisSelected = selectedAction === message;
+              const isThisDisabled = actionsLocked || (message === TABLE_PREVIOUS && tablePage === 1);
+              return (
+                <Box
+                  key={label}
+                  component="button"
+                  type="button"
+                  disabled={isThisDisabled}
+                  onClick={() => handleAction(message)}
+                  sx={{
+                    display: 'flex', alignItems: 'center', gap: 0.5, px: 1, py: 0.5,
+                    border: `1px solid ${isThisSelected ? COLORS.primary : 'var(--dm-border, rgba(49, 45, 42, 0.12))'}`,
+                    borderRadius: '6px',
+                    cursor: isThisDisabled ? 'default' : 'pointer',
+                    backgroundColor: isThisSelected ? 'rgba(199, 70, 52, 0.06)' : 'transparent',
+                    color: COLORS.text.primary,
+                    fontSize: '0.75rem', fontFamily: TYPOGRAPHY.fontFamily,
+                    opacity: isThisDisabled && !isThisSelected ? 0.5 : 1,
+                    transition: 'all 0.2s',
+                    ...(!isThisDisabled && {
+                      '&:hover': { borderColor: COLORS.primary, backgroundColor: 'rgba(199, 70, 52, 0.04)' },
+                    }),
+                  }}
+                >
+                  {isThisSelected ? <Check size={13} /> : <Icon size={13} />}
+                  {label}
+                </Box>
+              );
+            })}
+          </Box>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             <Box
               component="button"
@@ -2580,7 +2630,7 @@ function WidgetButton({ label, color, onClick, isSubmit, isLoading, isClicked, d
   );
 }
 
-export default function Widget({ props = {}, streamingKey = null, streamingValue = "", onSubmit, selectedData = null, disabled = false, embedded = false }) {
+export default function Widget({ props = {}, streamingKey = null, streamingValue = "", onSubmit, selectedData = null, disabled = false, embedded = false, isComplete }) {
   const [formState, setFormState] = useState({});
   const [clickedButton, setClickedButton] = useState(null);
   const [loadingButton, setLoadingButton] = useState(null);
@@ -3124,7 +3174,7 @@ export default function Widget({ props = {}, streamingKey = null, streamingValue
 
   // Render table widget if detected (has tb: and h:/r: keys)
   if (props.tb !== undefined || (Object.keys(props).some(k => k.startsWith('h')) && Object.keys(props).some(k => k.startsWith('r')))) {
-    return <WidgetTable props={props} />;
+    return <WidgetTable props={props} onSubmit={onSubmit} disabled={disabled} selectedData={selectedData} isComplete={isComplete} />;
   }
 
   // Render checklist widget if detected (has ck: or done:/todo:/blocked: keys)
