@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { appendFileSync } from 'node:fs';
-import { ociRequest } from '../../lib/oci-proxy';
+import { DEFAULT_MODEL, ociRequest } from '../../lib/oci-proxy';
 import { Langfuse } from 'langfuse';
 import { createLogger } from '../../lib/logger';
 import { splitMcpFunctionName } from '../../lib/mcp-fn-name';
@@ -37,7 +37,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Input is required' }, { status: 400 });
     }
 
-    const modelId = model || 'openai.gpt-oss-120b';
+    const modelId = model || DEFAULT_MODEL;
 
     // Multi-agent models use /v1, all others use /openai/v1
     // Llama oes not work due to the openai/ placeholder - TODO: Check why no multi-agent?

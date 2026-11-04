@@ -240,12 +240,13 @@ export default function Home({ initialConversationId = null }) {
     const STATIC_MODELS = [
       // OpenAI - External & Internal
       // "openai.gpt-oss-20b",
-      "openai.gpt-oss-120b",
+      // "openai.gpt-oss-120b",
       // // Google
       // "google.gemini-2.5-flash",
       // "google.gemini-2.5-flash-lite",
       // "google.gemini-2.5-pro",
-      // // xAI
+      // xAI
+      "xai.grok-4.7",
       // "xai.grok-4.6",
       // "cohere.command-a-03-2025",
       // "meta.llama-3.3-70b-instruct",
@@ -262,7 +263,7 @@ export default function Home({ initialConversationId = null }) {
     if (savedIsAvailable) {
       setSelectedModel(savedModel);
     } else if (STATIC_MODELS.length > 0) {
-      const defaultModel = "google.gemini-2.5-pro";
+      const defaultModel = "xai.grok-4.7";
       setSelectedModel(defaultModel);
       localStorage.setItem("selectedModel", defaultModel);
     }

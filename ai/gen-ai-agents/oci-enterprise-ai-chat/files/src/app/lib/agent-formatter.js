@@ -8,12 +8,12 @@
  * answer is shown.
  */
 
-import { ociRequest } from './oci-proxy';
+import { DEFAULT_MODEL, ociRequest } from './oci-proxy';
 import { readSseEvents } from './agent-hub';
 
 // Must be a model the region serves through the Responses API (in uk-london-1
 // that is only openai.gpt-oss-120b). Override with AGENT_HUB_FORMATTER_MODEL.
-const FORMATTER_MODEL = process.env.AGENT_HUB_FORMATTER_MODEL || 'openai.gpt-oss-120b';
+const FORMATTER_MODEL = process.env.AGENT_HUB_FORMATTER_MODEL || DEFAULT_MODEL;
 
 const FORMATTER_RULES = `You format answers from an enterprise data agent for display in a chat application.
 You receive the user's question and the agent's answer. Rewrite the agent's answer for display, using the widget syntax described below wherever it makes the answer clearer (charts, tables, stat cards, timelines, ...).

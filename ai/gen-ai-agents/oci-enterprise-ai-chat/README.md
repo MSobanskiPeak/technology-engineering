@@ -35,7 +35,8 @@ Open [http://localhost:3000](http://localhost:3000). On first run, create a `.en
 # OCI Enterprise AI: set to your tenancy's region
 OCI_REGION=us-chicago-1                # any region key works (us-ashburn-1, eu-frankfurt-1, ap-sydney-1, …)
 OCI_COMPARTMENT_ID=ocid1.compartment.oc1..xxxxx
-OCI_GENAI_PROJECT_ID=ocid1.generativeaiproject.oc1..xxxxx
+OCI_GENAI_PROJECT_ID=ocid1.generativeaiproject.oc1..xxxxx   # must be a project in OCI_REGION
+# OCI_DEFAULT_MODEL=xai.grok-4.7       # model for titles and agent answer formatting; must be available in OCI_REGION
 
 # Local dev (API-key auth via ~/.oci/config)
 OCI_CONFIG_FILE=~/.oci/config

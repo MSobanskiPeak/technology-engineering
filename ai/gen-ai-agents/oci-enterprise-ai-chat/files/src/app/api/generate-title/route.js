@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { ociRequest } from '../../lib/oci-proxy';
+import { DEFAULT_MODEL, ociRequest } from '../../lib/oci-proxy';
 import { createLogger } from '../../lib/logger';
 
 export async function POST(request) {
@@ -15,7 +15,7 @@ export async function POST(request) {
 
     // Instructions go in a system message: OCI ignores `instructions` for gpt-oss.
     const requestBody = {
-      model: 'openai.gpt-oss-120b',
+      model: DEFAULT_MODEL,
       input: [
         {
           role: 'system',

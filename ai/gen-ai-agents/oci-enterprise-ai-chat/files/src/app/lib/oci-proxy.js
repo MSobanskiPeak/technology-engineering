@@ -21,6 +21,11 @@ const log = createLogger('oci-proxy');
 
 const region = () => process.env.OCI_REGION || 'us-chicago-1';
 
+// Model for server-side calls that don't get one from the client (conversation
+// titles, agent answer formatting). Must be served by OCI_REGION through the
+// Responses API.
+export const DEFAULT_MODEL = process.env.OCI_DEFAULT_MODEL || 'xai.grok-4.7';
+
 const HOSTS = {
   inference: {
     base: () => `https://inference.generativeai.${region()}.oci.oraclecloud.com/openai/v1`,

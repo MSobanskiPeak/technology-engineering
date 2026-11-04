@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 //   EXAMPLE_QUERIES='["Categorize my agents","What problems can my agents solve?"]'
 // or a JSON object of lists per model, keyed by agent name or model id, with an
 // optional "default" list for models that have no entry:
-//   EXAMPLE_QUERIES='{"AdaHR":["What is our headcount by region?"],"openai.gpt-oss-120b":["Summarise this file"],"default":["What can you do?"]}'
+//   EXAMPLE_QUERIES='{"AdaHR":["What is our headcount by region?"],"xai.grok-4.7":["Summarise this file"],"default":["What can you do?"]}'
 
 export const dynamic = 'force-dynamic';
 
