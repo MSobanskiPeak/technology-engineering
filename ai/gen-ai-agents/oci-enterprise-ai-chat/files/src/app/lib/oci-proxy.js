@@ -70,6 +70,7 @@ export async function ociRequest(method, path, options = {}) {
     ? `https://${hostConfig.host()}${basePath}`
     : hostConfig.base();
   const endpoint = `${baseUrl}${path}`;
+  log.info('OCI request', { method, url: endpoint, model: body?.model });
 
   const headers = {
     'accept': 'application/json',
@@ -113,6 +114,8 @@ export async function ociRequest(method, path, options = {}) {
  */
 export async function ociSignedFetch(method, url, options = {}) {
   const { body = null, extraHeaders = {}, signal } = options;
+  log.info('OCI request', { method, url });
+
   const headers = {
     'accept': 'application/json',
     'host': new URL(url).host,

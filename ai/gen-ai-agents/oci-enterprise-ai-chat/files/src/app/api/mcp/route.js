@@ -144,7 +144,8 @@ export async function POST(request) {
     }
 
     const log = createLogger('mcp-proxy');
-    log.info('MCP request', { method, params: JSON.stringify(params).slice(0, 200) });
+    // No query string: some MCP servers carry keys in it
+    log.info('MCP request', { url: String(url).split('?')[0], method, params: JSON.stringify(params).slice(0, 200) });
 
     const response = await fetch(url, {
       method: 'POST',

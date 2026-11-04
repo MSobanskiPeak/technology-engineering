@@ -58,6 +58,7 @@ export async function POST(request) {
   };
 
   try {
+    log.info('OCI request', { method: 'POST', url });
     const signed = await signRequest('POST', url, headers, payload);
     const res = await fetch(url, { method: 'POST', headers: signed, body: payload });
     const text = await res.text();
