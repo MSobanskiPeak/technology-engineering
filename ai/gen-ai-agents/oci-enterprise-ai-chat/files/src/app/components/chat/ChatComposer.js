@@ -4,6 +4,8 @@ import { Box, Typography } from "@mui/material";
 import { AnimatePresence, motion } from "framer-motion";
 import { CornerDownRight } from "lucide-react";
 import { memo, useCallback, useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import TypingEffect from "../ui/TypingEffect";
 import ChatInput from "./ChatInput";
 import ModelPicker from "./ModelPicker";
@@ -12,6 +14,14 @@ export const FEED_MAX_WIDTH = 1000;
 
 const inputFontSizes = { xs: "1rem", md: "1.1rem" };
 const EASE = [0.25, 0.46, 0.45, 0.94];
+
+// The selected model's own entry (by full id, or by name without the
+// "agenthub."/"openai." prefix), else the default entry
+const entryForModel = (config, selectedModel) => {
+  if (!selectedModel) return config.default;
+  const shortName = selectedModel.replace(/^[a-z]+\./, "");
+  return config.byModel[selectedModel] || config.byModel[shortName] || config.default;
+};
 
 // Welcome heading + input box. Before the first message it sits in the middle
 // of the main column; once a conversation exists it settles at the bottom.
@@ -36,6 +46,8 @@ const ChatComposer = memo(function ChatComposer({
 }) {
   const textColor = isDarkBg ? "#e5e5e5" : "#000000";
   const [exampleConfig, setExampleConfig] = useState({ byModel: {}, default: [] });
+  // Null until loaded, so the generic greeting doesn't flash before an agent's own
+  const [welcomeConfig, setWelcomeConfig] = useState(null);
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const openPicker = useCallback(() => setPickerOpen(true), []);
@@ -62,22 +74,20 @@ const ChatComposer = memo(function ChatComposer({
     </Box>
   );
 
-  // Suggested prompts come from EXAMPLE_QUERIES in the server env
+  // Suggested prompts and welcome text come from EXAMPLE_QUERIES and
+  // WELCOME_MESSAGES in the server env
   useEffect(() => {
     fetch("/api/example-queries")
       .then(res => (res.ok ? res.json() : null))
-      .then(data => data && setExampleConfig({ byModel: data.byModel || {}, default: data.default || [] }))
-      .catch(() => { /* suggestions are optional */ });
+      .then(data => {
+        if (data) setExampleConfig({ byModel: data.byModel || {}, default: data.default || [] });
+        setWelcomeConfig({ byModel: data?.welcome?.byModel || {}, default: data?.welcome?.default || "" });
+      })
+      .catch(() => setWelcomeConfig({ byModel: {}, default: "" }));
   }, []);
 
-  // The selected model's own list (by full id, or by name without the
-  // "agenthub."/"openai." prefix), else the default list
-  const exampleQueries = (() => {
-    if (!selectedModel) return exampleConfig.default;
-    const { byModel } = exampleConfig;
-    const shortName = selectedModel.replace(/^[a-z]+\./, "");
-    return byModel[selectedModel] || byModel[shortName] || exampleConfig.default;
-  })();
+  const exampleQueries = entryForModel(exampleConfig, selectedModel);
+  const customWelcome = welcomeConfig && entryForModel(welcomeConfig, selectedModel);
 
   return (
     <Box
@@ -106,20 +116,44 @@ const ChatComposer = memo(function ChatComposer({
               style={{ overflow: "hidden" }}
             >
               <Box sx={{ minHeight: { xs: 72, md: 88 } }}>
-                <TypingEffect text="Nice to see you" speed={50}>
-                  {(displayedText) => (
-                    <Typography sx={{ mb: 2, fontSize: { xs: "1.6rem", md: "2rem" }, fontWeight: 300, lineHeight: 1.3, color: textColor }}>
-                      {displayedText}
-                    </Typography>
-                  )}
-                </TypingEffect>
-                <TypingEffect text={welcomeMessage} speed={50} delay={200}>
-                  {(displayedText) => (
-                    <Typography sx={{ fontSize: { xs: "1rem", md: "1.2rem" }, fontWeight: 300, lineHeight: 1.3, color: textColor }}>
-                      {displayedText}
-                    </Typography>
-                  )}
-                </TypingEffect>
+                {customWelcome ? (
+                  <motion.div
+                    key={selectedModel}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.25, ease: EASE }}
+                  >
+                    <Box
+                      sx={{
+                        mb: 2.5,
+                        fontSize: { xs: "0.95rem", md: "1.05rem" },
+                        lineHeight: 1.5,
+                        color: textColor,
+                        "& p": { m: 0, mb: 1.5 },
+                        "& > :last-child": { mb: 0 },
+                      }}
+                    >
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{customWelcome}</ReactMarkdown>
+                    </Box>
+                  </motion.div>
+                ) : welcomeConfig && (
+                  <>
+                    <TypingEffect text="Nice to see you" speed={50}>
+                      {(displayedText) => (
+                        <Typography sx={{ mb: 2, fontSize: { xs: "1.6rem", md: "2rem" }, fontWeight: 300, lineHeight: 1.3, color: textColor }}>
+                          {displayedText}
+                        </Typography>
+                      )}
+                    </TypingEffect>
+                    <TypingEffect text={welcomeMessage} speed={50} delay={200}>
+                      {(displayedText) => (
+                        <Typography sx={{ fontSize: { xs: "1rem", md: "1.2rem" }, fontWeight: 300, lineHeight: 1.3, color: textColor }}>
+                          {displayedText}
+                        </Typography>
+                      )}
+                    </TypingEffect>
+                  </>
+                )}
               </Box>
             </motion.div>
           )}

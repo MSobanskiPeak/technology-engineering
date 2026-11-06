@@ -111,6 +111,14 @@ To show different prompts per agent or model, use a JSON object keyed by the age
 EXAMPLE_QUERIES='{"hr":["What is our headcount by region?"],"openai.gpt-oss-120b":["Summarise this file"],"default":["What can you do?"]}'
 ```
 
+### Welcome messages, optional
+
+The welcome section above the input on an empty chat, written in Markdown. It uses the same keys as `EXAMPLE_QUERIES`, with a string per agent or model. Use `\n\n` between paragraphs. The optional `"default"` is shown for models that have no entry; without it, those models show the standard greeting.
+
+```bash
+WELCOME_MESSAGES='{"hr":"Welcome to **HR Advisor**.\n\nAsk about headcount and leave.","default":"What can I help with?"}'
+```
+
 ### OCI Generative AI Hosted Deployments, optional
 
 When the app is deployed via OCI Generative AI Hosted Applications, the platform injects `APPLICATION_BASE_URL` (the full invocation prefix) into the container. `entrypoint.sh` honors it automatically and falls back to a manual `BASE_PATH=/your-path` for non-hosted deployments behind a subpath. Nothing to set if you do not use either.
