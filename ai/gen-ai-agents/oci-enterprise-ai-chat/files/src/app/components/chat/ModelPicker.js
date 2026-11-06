@@ -3,6 +3,7 @@
 import { Box, ClickAwayListener, InputBase, Typography } from "@mui/material";
 import { Check, Search } from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
+import { DARK_SURFACE } from "../../config/darkMode";
 
 const displayName = (model) => model.replace(/^[a-z]+\./, "");
 
@@ -55,9 +56,9 @@ const ModelPicker = memo(function ModelPicker({
       <Box
         onKeyDown={handleKeyDown}
         sx={{
-          borderRadius: "14px",
-          border: `1px solid ${isDarkBg ? "rgba(255,255,255,0.12)" : "rgba(0, 0, 0, 0.12)"}`,
-          backgroundColor: isDarkBg ? "#242424" : "#ffffff",
+          borderRadius: "10px",
+          border: `1px solid ${isDarkBg ? "rgba(255,255,255,0.22)" : "rgba(0, 0, 0, 0.12)"}`,
+          backgroundColor: isDarkBg ? DARK_SURFACE : "#ffffff",
           boxShadow: isDarkBg ? "0 4px 20px rgba(0,0,0,0.3)" : "0 4px 20px rgba(0,0,0,0.06)",
           overflow: "hidden",
         }}

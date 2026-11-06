@@ -2,9 +2,10 @@
 
 import { useId } from "react";
 import { motion } from "framer-motion";
+import { DARK_BG } from "../../config/darkMode";
 
 export default function OracleLogo({ accentColor = "#C74634", isDarkBg = false, maxHeight = 100, style }) {
-  const bg = isDarkBg ? "#1a1a1a" : "#ffffff";
+  const bg = isDarkBg ? DARK_BG : "#ffffff";
   const rawId = useId();
   const uid = rawId.replace(/:/g, "");
   const leftId = `clip-left-${uid}`;

@@ -1,8 +1,11 @@
 "use client";
 
-import { Box, IconButton, Tooltip, Typography } from "@mui/material";
-import { History, PanelLeftClose, PanelLeftOpen, Settings, SquarePen } from "lucide-react";
-import { memo } from "react";
+import { Avatar, Box, Divider, IconButton, ListItemIcon, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
+import { History, LogOut, PanelLeftClose, PanelLeftOpen, Plus, Settings } from "lucide-react";
+import { memo, useState } from "react";
+import { GrOracle } from "react-icons/gr";
+import { withBase } from "@/lib/withBase";
+import { DARK_BG } from "../../config/darkMode";
 import ScrollableList from "../ui/ScrollableList";
 
 export const SIDEBAR_WIDTH = 272;
@@ -26,9 +29,12 @@ const ChatSidebar = memo(function ChatSidebar({
   onRefreshConversations,
   accentColor = "#C74634",
   isDarkBg = false,
+  showLogo = true,
+  user = null,
 }) {
-  const bgColor = isDarkBg ? "#202020" : "#fafafa";
-  const iconColor = isDarkBg ? "rgba(255,255,255,0.6)" : "rgba(0, 0, 0, 0.55)";
+  const [userMenuAnchor, setUserMenuAnchor] = useState(null);
+  const bgColor = isDarkBg ? DARK_BG : "#fafafa";
+  const iconColor = isDarkBg ? "rgba(255,255,255,0.9)" : "rgba(0, 0, 0, 0.55)";
   const hoverBg = isDarkBg ? "rgba(255,255,255,0.06)" : "rgba(0, 0, 0, 0.04)";
 
   const navItemSx = {
@@ -48,7 +54,9 @@ const ChatSidebar = memo(function ChatSidebar({
   const labelSx = {
     fontSize: "0.9rem",
     fontWeight: 400,
-    color: isDarkBg ? "rgba(255,255,255,0.85)" : "rgba(0, 0, 0, 0.8)",
+    color: isDarkBg ? "rgba(255,255,255,0.95)" : "rgba(0, 0, 0, 0.8)",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
     opacity: collapsed ? 0 : 1,
     transition: "opacity 0.15s ease",
   };
@@ -74,14 +82,21 @@ const ChatSidebar = memo(function ChatSidebar({
         gap: 0.5,
         px: 1.5,
         py: 1.5,
-        backgroundColor: bgColor,
-        borderRight: `1px solid ${isDarkBg ? "rgba(255,255,255,0.08)" : "rgba(0, 0, 0, 0.08)"}`,
+        // In dark mode the bottom-left artwork shows faintly through the sidebar
+        backgroundColor: isDarkBg ? "rgba(30, 39, 45, 0.88)" : bgColor,
+        backdropFilter: isDarkBg ? "blur(14px)" : undefined,
+        borderRight: isDarkBg ? "none" : "1px solid rgba(0, 0, 0, 0.08)",
         transition: "width 0.2s ease",
         overflow: "hidden",
       }}
     >
-      {/* Collapse toggle */}
-      <Box sx={{ display: "flex", justifyContent: collapsed ? "flex-start" : "flex-end", mb: 0.5 }}>
+      {/* Logo + collapse toggle */}
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "flex-start" : "space-between", mb: 0.5 }}>
+        {!collapsed && (showLogo ? (
+          <Box onClick={onNewConversation} sx={{ display: "flex", px: "6px", cursor: "pointer" }}>
+            <GrOracle size={30} color={isDarkBg ? "#ffffff" : accentColor} aria-label="New chat" />
+          </Box>
+        ) : <Box />)}
         <Tooltip title={collapsed ? "Expand sidebar" : "Collapse sidebar"} placement="right">
           <IconButton
             onClick={onToggleCollapsed}
@@ -93,7 +108,7 @@ const ChatSidebar = memo(function ChatSidebar({
         </Tooltip>
       </Box>
 
-      {navItem(<SquarePen size={20} style={{ flexShrink: 0 }} />, "New conversation", onNewConversation)}
+      {navItem(<Plus size={20} style={{ flexShrink: 0 }} />, "New chat", onNewConversation)}
 
       {/* Conversation history — an icon that expands the sidebar when collapsed */}
       {collapsed ? (
@@ -101,7 +116,7 @@ const ChatSidebar = memo(function ChatSidebar({
       ) : (
         <Box sx={{ flex: 1, minHeight: 0, display: "flex", px: "10px", mt: 1 }}>
           <ScrollableList
-            title="Conversations"
+            title="Chats"
             titleDelay={0}
             fill
             bgColor={bgColor}
@@ -124,12 +139,44 @@ const ChatSidebar = memo(function ChatSidebar({
         </Box>
       )}
 
-      {/* Settings — pinned to the bottom in both states */}
-      {onOpenSettings && (
-        <Box sx={{ mt: "auto", pt: 1 }}>
-          {navItem(<Settings size={20} style={{ flexShrink: 0 }} />, "Settings", onOpenSettings)}
-        </Box>
-      )}
+      {/* Settings and the signed-in user — pinned to the bottom in both states */}
+      <Box sx={{ mt: "auto", pt: 1 }}>
+        {onOpenSettings && navItem(<Settings size={20} style={{ flexShrink: 0 }} />, "Settings", onOpenSettings)}
+        {user && (
+          <>
+            {navItem(
+              <Avatar sx={{ width: 24, height: 24, fontSize: "0.7rem", flexShrink: 0, bgcolor: isDarkBg ? "rgba(255,255,255,0.15)" : "#1a1a1a", color: isDarkBg ? "#e5e5e5" : "#fff" }}>
+                {(user.name || user.email || "U").charAt(0).toUpperCase()}
+              </Avatar>,
+              user.email || user.name,
+              (e) => setUserMenuAnchor(e.currentTarget),
+            )}
+            <Menu
+              anchorEl={userMenuAnchor}
+              open={Boolean(userMenuAnchor)}
+              onClose={() => setUserMenuAnchor(null)}
+              anchorOrigin={{ vertical: "top", horizontal: "left" }}
+              transformOrigin={{ vertical: "bottom", horizontal: "left" }}
+              PaperProps={{ sx: { minWidth: 200 } }}
+            >
+              <MenuItem disabled sx={{ opacity: "1 !important", display: "block" }}>
+                <Typography sx={{ fontSize: "0.85rem", fontWeight: 500 }}>{user.name}</Typography>
+                <Typography sx={{ fontSize: "0.7rem", color: "text.secondary" }}>{user.email}</Typography>
+              </MenuItem>
+              <Divider />
+              <MenuItem
+                onClick={() => { window.location.href = withBase("/api/auth/logout"); }}
+                sx={{ fontSize: "0.85rem", color: "error.main" }}
+              >
+                <ListItemIcon sx={{ minWidth: 28 }}>
+                  <LogOut size={16} color="#d32f2f" />
+                </ListItemIcon>
+                Sign out
+              </MenuItem>
+            </Menu>
+          </>
+        )}
+      </Box>
     </Box>
   );
 });

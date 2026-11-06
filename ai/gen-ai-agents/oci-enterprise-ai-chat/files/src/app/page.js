@@ -31,8 +31,9 @@ import { TablePageContext, getTablePages } from "./utils/tablePaging";
 import FileDropZone from "./components/chat/FileDropZone";
 import ScrollableList from "./components/ui/ScrollableList";
 import OracleLogo from "./components/ui/OracleLogo";
+import AgentHubBackground from "./components/ui/AgentHubBackground";
 import useChat from "./hooks/useChat";
-import { darkModeOverrides, darkCssVars, lightCssVars, DARK_BG } from "./config/darkMode";
+import { darkModeOverrides, darkCssVars, lightCssVars, DARK_BG, DARK_SURFACE } from "./config/darkMode";
 import { INTERNAL_MODELS } from "./config/models-internal";
 
 const INTERNAL_MODE_AVAILABLE = INTERNAL_MODELS.length > 0;
@@ -54,7 +55,7 @@ export default function Home({ initialConversationId = null }) {
 
   // UI Settings from localStorage
   const [uiSettings, setUiSettings] = useState({
-    appTitle: "OCI Enterprise AI",
+    appTitle: "Oracle AIDP",
     appLogo: "",
     welcomeMessage: "Welcome back!",
     inputPlaceholder: "Type anything...",
@@ -62,10 +63,8 @@ export default function Home({ initialConversationId = null }) {
 
   const accentColor = uiSettings.accentColor || "#C74634";
   const hasCustomAccent = !!uiSettings.accentColor && uiSettings.accentColor.toLowerCase() !== "#c74634";
-  const leafColor = hasCustomAccent ? mixWithWhite(accentColor, 0.45) : "#C9B9A0";
-  const groundColor = hasCustomAccent ? mixWithWhite(accentColor, 0.65) : "#2D5F5D";
   const iconTint = hasCustomAccent ? accentColor : null;
-  const isDarkBg = uiSettings.darkMode === true;
+  const isDarkBg = uiSettings.darkMode !== false;
   const accentForDark = (() => {
     if (!isDarkBg) return accentColor;
     const c = (accentColor || "#C74634").replace("#", "");
@@ -77,7 +76,7 @@ export default function Home({ initialConversationId = null }) {
     palette: {
       ...theme.palette,
       mode: "dark",
-      background: { default: DARK_BG, paper: "#242424" },
+      background: { default: DARK_BG, paper: DARK_SURFACE },
       text: { primary: "#e5e5e5", secondary: "rgba(255,255,255,0.5)" },
       divider: "rgba(255,255,255,0.08)",
     },
@@ -86,7 +85,7 @@ export default function Home({ initialConversationId = null }) {
   const [showTextField, setShowTextField] = useState(false);
   const [appMode, setAppMode] = useState("client"); // 'client' or 'internal'
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [mobileUser, setMobileUser] = useState(null);
+  const [sessionUser, setSessionUser] = useState(null);
   const [drawerUserMenuAnchor, setDrawerUserMenuAnchor] = useState(null);
 
   // Desktop sidebar collapsed state, remembered per browser
@@ -231,7 +230,7 @@ export default function Home({ initialConversationId = null }) {
         try {
           const parsedSettings = JSON.parse(stored);
           setUiSettings(parsedSettings);
-          document.title = parsedSettings.appTitle || "OCI Enterprise AI";
+          document.title = parsedSettings.appTitle || "Oracle AIDP";
         } catch (e) {
           console.error("Error parsing UI settings:", e);
         }
@@ -240,7 +239,7 @@ export default function Home({ initialConversationId = null }) {
 
     const handleUiSettingsChanged = (e) => {
       setUiSettings(e.detail);
-      document.title = e.detail.appTitle || "OCI Enterprise AI";
+      document.title = e.detail.appTitle || "Oracle AIDP";
     };
     window.addEventListener('uiSettingsChanged', handleUiSettingsChanged);
 
@@ -302,7 +301,7 @@ export default function Home({ initialConversationId = null }) {
     fetch('/api/auth/session')
       .then(res => res.json())
       .then(data => {
-        if (data.authenticated) setMobileUser(data.user);
+        if (data.authenticated) setSessionUser(data.user);
       })
       .catch(() => {});
 
@@ -329,138 +328,23 @@ export default function Home({ initialConversationId = null }) {
         ...(isDarkBg ? { ...darkCssVars, ...darkModeOverrides } : lightCssVars),
       }}
     >
-      {/* Oracle Redwood — Layered canopy with textured leaf forms */}
-      {showTextField && <svg
-        style={{
-          position: "fixed",
-          bottom: 0,
-          right: 0,
-          width: "75vw",
-          height: "65vh",
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-        viewBox="0 0 1200 800"
-        preserveAspectRatio="xMaxYMax slice"
-        fill="none"
-      >
-        <defs>
-          {/* Flowing curves — organic wave grain */}
-          <pattern id="tx-fiber" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(-15)">
-            <path d="M0 10 Q10 5 20 12 Q30 20 40 14" stroke="white" strokeOpacity="0.25" strokeWidth="1.8" fill="none" />
-            <path d="M0 22 Q12 16 22 24 Q32 30 40 26" stroke="white" strokeOpacity="0.30" strokeWidth="2" fill="none" />
-            <path d="M0 34 Q8 28 18 35 Q28 40 40 36" stroke="white" strokeOpacity="0.20" strokeWidth="1.4" fill="none" />
-          </pattern>
-          {/* Topographic contours — nested organic curves */}
-          <pattern id="tx-wave" width="50" height="50" patternUnits="userSpaceOnUse" patternTransform="rotate(-8)">
-            <path d="M0 25 Q12 10 25 15 Q38 20 50 10" stroke="white" strokeOpacity="0.28" strokeWidth="1.8" fill="none" />
-            <path d="M0 35 Q15 25 25 28 Q40 32 50 22" stroke="white" strokeOpacity="0.20" strokeWidth="1.4" fill="none" />
-            <path d="M0 45 Q10 38 25 40 Q38 42 50 35" stroke="white" strokeOpacity="0.14" strokeWidth="1" fill="none" />
-          </pattern>
-          {/* Weathered erosion — scattered small marks like worn wood */}
-          <pattern id="tx-cross" width="30" height="30" patternUnits="userSpaceOnUse" patternTransform="rotate(2)">
-            <rect x="2" y="3" width="6" height="2.5" rx="0.8" fill="white" fillOpacity="0.25" />
-            <rect x="18" y="8" width="8" height="2" rx="0.8" fill="white" fillOpacity="0.18" />
-            <rect x="8" y="15" width="5" height="2.5" rx="0.8" fill="white" fillOpacity="0.22" />
-            <rect x="22" y="20" width="7" height="2" rx="0.8" fill="white" fillOpacity="0.16" />
-            <rect x="5" y="25" width="9" height="2" rx="0.8" fill="white" fillOpacity="0.20" />
-            <rect x="15" y="2" width="3" height="5" rx="0.8" fill="white" fillOpacity="0.14" />
-            <rect x="26" y="14" width="3" height="4" rx="0.8" fill="white" fillOpacity="0.16" />
-            <rect x="12" y="22" width="5" height="2" rx="0.8" fill="white" fillOpacity="0.18" />
-          </pattern>
-          {/* Stipple — larger dots */}
-          <pattern id="tx-stipple" width="8" height="8" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="1.2" fill="white" fillOpacity="0.30" />
-            <circle cx="6" cy="6" r="0.9" fill="white" fillOpacity="0.22" />
-          </pattern>
-          {/* Noise displacement for organic edges */}
-          <filter id="rw-organic">
-            <feTurbulence type="turbulence" baseFrequency="0.015" numOctaves="3" seed="2" />
-            <feDisplacementMap in="SourceGraphic" scale="6" />
-          </filter>
-        </defs>
+      {showTextField && <AgentHubBackground isDarkBg={isDarkBg} />}
 
-        <style>{`
-          @keyframes rw-rise {
-            from { transform: translate(80px, 120px); opacity: 0; }
-            to { transform: translate(0, 0); opacity: 1; }
-          }
-          .rw-layer { animation: rw-rise 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards; opacity: 0; }
-          .rw-d0 { animation-delay: 0.1s; }
-          .rw-d1 { animation-delay: 0.2s; }
-          .rw-d2 { animation-delay: 0.05s; }
-          .rw-d3 { animation-delay: 0.15s; }
-        `}</style>
-
-        <g filter="url(#rw-organic)" transform="translate(120, 110)">
-          {/* ══ LAYER 1a: Leaf — rotated left, behind everything ══ */}
-          <g className="rw-layer rw-d0">
-            <g transform="rotate(-40, 1100, 800)">
-              <path
-                d="M1150 800 C1130 680 1100 540 1070 460 C1050 400 1035 370 1030 360 C1015 380 1000 420 990 480 C980 560 990 680 1000 800 Z"
-                fill={leafColor}
-              />
-              <path
-                d="M1150 800 C1130 680 1100 540 1070 460 C1050 400 1035 370 1030 360 C1015 380 1000 420 990 480 C980 560 990 680 1000 800 Z"
-                fill="url(#tx-wave)"
-              />
-            </g>
-          </g>
-
-          {/* ══ LAYER 1b: Second leaf — slightly rotated right ══ */}
-          <g className="rw-layer rw-d1">
-            <g transform="rotate(-20, 980, 800)">
-              <path
-                d="M1080 800 C1070 720 1050 620 1030 550 C1015 500 1005 475 1000 465 C990 485 980 520 975 570 C965 640 970 720 980 800 Z"
-                fill={leafColor}
-              />
-              <path
-                d="M1080 800 C1070 720 1050 620 1030 550 C1015 500 1005 475 1000 465 C990 485 980 520 975 570 C965 640 970 720 980 800 Z"
-                fill="url(#tx-stipple)"
-              />
-            </g>
-          </g>
-
-          {/* ══ LAYER 2: Right — darkest, accent color ══ */}
-          <g className="rw-layer rw-d2">
-            <path
-              d="M1400 800 C1360 620 1280 500 1180 460 C1060 420 980 470 930 560 C890 640 900 730 920 800 Z"
-              fill={accentColor}
-            />
-            <path
-              d="M1400 800 C1360 620 1280 500 1180 460 C1060 420 980 470 930 560 C890 640 900 730 920 800 Z"
-              fill="url(#tx-fiber)"
-            />
-          </g>
-
-          {/* ══ LAYER 3: Left sweep — lightest, on top ══ */}
-          <g className="rw-layer rw-d3">
-            <path
-              d="M1400 800 C1350 720 1150 650 950 640 C750 630 600 680 450 760 L350 800 Z"
-              fill={groundColor}
-            />
-            <path
-              d="M1400 800 C1350 720 1150 650 950 640 C750 630 600 680 450 760 L350 800 Z"
-              fill="url(#tx-cross)"
-            />
-          </g>
-        </g>
-
-      </svg>}
-
-      {/* Header */}
-      <Header
-        onNewConversation={handleNewConversation}
-        isMobile={isMobile}
-        onMenuToggle={() => setMobileDrawerOpen(true)}
-        showLabChip={uiSettings.showLabChip !== false}
-        showLabIcon={uiSettings.showLabIcon !== false}
-        appTitle={uiSettings.appTitle}
-        accentColor={accentForDark}
-        isDarkBg={isDarkBg}
-        appMode={INTERNAL_MODE_AVAILABLE ? appMode : undefined}
-        onToggleAppMode={INTERNAL_MODE_AVAILABLE ? handleToggleAppMode : undefined}
-      />
+      {/* Header — mobile only; on desktop the sidebar holds the logo and user */}
+      {isMobile && (
+        <Header
+          onNewConversation={handleNewConversation}
+          isMobile={isMobile}
+          onMenuToggle={() => setMobileDrawerOpen(true)}
+          showLabChip={uiSettings.showLabChip !== false}
+          showLabIcon={uiSettings.showLabIcon !== false}
+          appTitle={uiSettings.appTitle}
+          accentColor={accentForDark}
+          isDarkBg={isDarkBg}
+          appMode={INTERNAL_MODE_AVAILABLE ? appMode : undefined}
+          onToggleAppMode={INTERNAL_MODE_AVAILABLE ? handleToggleAppMode : undefined}
+        />
+      )}
 
       {/* Mobile Drawer */}
       {isMobile && (
@@ -564,7 +448,7 @@ export default function Home({ initialConversationId = null }) {
             </Box>
 
             {/* User row */}
-            {mobileUser && (
+            {sessionUser && (
               <>
                 <Box
                   onClick={(e) => setDrawerUserMenuAnchor(e.currentTarget)}
@@ -589,10 +473,10 @@ export default function Home({ initialConversationId = null }) {
                       color: isDarkBg ? "#e5e5e5" : "#fff",
                     }}
                   >
-                    {(mobileUser.name || mobileUser.email || "U").charAt(0).toUpperCase()}
+                    {(sessionUser.name || sessionUser.email || "U").charAt(0).toUpperCase()}
                   </Avatar>
                   <Typography sx={{ fontSize: "0.85rem", color: isDarkBg ? "rgba(255,255,255,0.7)" : "rgba(0, 0, 0, 0.6)", fontWeight: 400, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {mobileUser.name || mobileUser.email}
+                    {sessionUser.name || sessionUser.email}
                   </Typography>
                 </Box>
                 <Menu
@@ -604,10 +488,10 @@ export default function Home({ initialConversationId = null }) {
                   <MenuItem disabled sx={{ opacity: "1 !important" }}>
                     <Box>
                       <Typography sx={{ fontSize: "0.85rem", fontWeight: 500 }}>
-                        {mobileUser.name}
+                        {sessionUser.name}
                       </Typography>
                       <Typography sx={{ fontSize: "0.7rem", color: "text.secondary" }}>
-                        {mobileUser.email}
+                        {sessionUser.email}
                       </Typography>
                       <Chip
                         label="Oracle IDCS"
@@ -647,7 +531,7 @@ export default function Home({ initialConversationId = null }) {
         sx={{
           display: "flex",
           width: "100%",
-          paddingTop: "60px",
+          paddingTop: isMobile ? "60px" : 0,
           height: "100vh",
           boxSizing: "border-box",
           position: "relative",
@@ -672,6 +556,8 @@ export default function Home({ initialConversationId = null }) {
             onRefreshConversations={refreshRecentConversations}
             accentColor={accentForDark}
             isDarkBg={isDarkBg}
+            showLogo={uiSettings.showLabIcon !== false}
+            user={sessionUser}
           />
         )}
 

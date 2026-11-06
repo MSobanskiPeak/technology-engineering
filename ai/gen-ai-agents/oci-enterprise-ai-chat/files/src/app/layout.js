@@ -29,7 +29,7 @@ const oracleSans = localFont({
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: "OCI Enterprise AI",
+  title: "Oracle AIDP",
   description: "Chat with our AI assistant",
 };
 

@@ -56,6 +56,9 @@ const TOOLTIP_PROPS = {
   labelStyle: { color: "var(--dm-text, #1a1a1a)" },
 };
 
+// Legend labels default to their series colour, which can be too dark to read
+const legendLabel = (value) => <span style={{ color: "var(--dm-text, #1a1a1a)" }}>{value}</span>;
+
 const ChartWrapper = ({ children, height }) => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
@@ -87,7 +90,7 @@ export function WidgetLineChart({ props }) {
           cursor={{ stroke: "currentColor", strokeOpacity: 0.3 }}
           formatter={createTooltipFormatter(series)}
         />
-        {showLegend && <Legend wrapperStyle={{ fontSize: 11 }} />}
+        {showLegend && <Legend wrapperStyle={{ fontSize: 11 }} formatter={legendLabel} />}
         {series.map((s, i) => (
           <Line
             key={s.key}
@@ -129,7 +132,7 @@ export function WidgetBarChart({ props }) {
           cursor={{ fill: "currentColor", fillOpacity: 0.08 }}
           formatter={createTooltipFormatter(series)}
         />
-        {showLegend && <Legend wrapperStyle={{ fontSize: 11 }} />}
+        {showLegend && <Legend wrapperStyle={{ fontSize: 11 }} formatter={legendLabel} />}
         {series.map((s, i) => (
           <Bar
             key={s.key}
@@ -196,6 +199,7 @@ export function WidgetPieChart({ props, isDonut = false }) {
         {showLegend && (
           <Legend
             wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
+            formatter={legendLabel}
             layout="horizontal"
             align="center"
             verticalAlign="bottom"

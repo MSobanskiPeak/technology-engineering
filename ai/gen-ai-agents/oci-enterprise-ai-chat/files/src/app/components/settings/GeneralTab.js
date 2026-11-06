@@ -8,7 +8,7 @@ import IOSSwitch from "../ui/IOSSwitch";
 import { Building2, Moon, Sun, Settings as SettingsIcon, Users } from "lucide-react";
 import Header from "../ui/Header";
 import ChatSidebar from "../chat/ChatSidebar";
-import { DARK_BG } from "../../config/darkMode";
+import { DARK_BG, DARK_SURFACE } from "../../config/darkMode";
 
 
 
@@ -17,14 +17,14 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_UI_SETTINGS = {
-  appTitle: "OCI Enterprise AI",
+  appTitle: "Oracle AIDP",
   appLogo: "",
   welcomeMessage: "Welcome back!",
   inputPlaceholder: "Type anything...",
   accentColor: "#C74634",
   showLabChip: true,
   showLabIcon: true,
-  darkMode: false,
+  darkMode: true,
 };
 
 export default function GeneralTab() {
@@ -43,7 +43,7 @@ export default function GeneralTab() {
       palette: {
         ...baseTheme.palette,
         mode: "dark",
-        background: { default: DARK_BG, paper: "#242424" },
+        background: { default: DARK_BG, paper: DARK_SURFACE },
         text: { primary: "#e5e5e5", secondary: "rgba(255,255,255,0.5)" },
         divider: "rgba(255,255,255,0.08)",
       },
@@ -55,7 +55,7 @@ export default function GeneralTab() {
     const storedUiSettings = localStorage.getItem(STORAGE_KEYS.UI_SETTINGS);
     if (storedUiSettings) {
       try {
-        setUiSettings(JSON.parse(storedUiSettings));
+        setUiSettings({ darkMode: true, ...JSON.parse(storedUiSettings) });
       } catch (e) {
         console.error('Error parsing stored UI settings:', e);
       }

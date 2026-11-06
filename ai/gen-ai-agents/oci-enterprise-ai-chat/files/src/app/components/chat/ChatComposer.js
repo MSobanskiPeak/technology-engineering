@@ -9,6 +9,7 @@ import remarkGfm from "remark-gfm";
 import TypingEffect from "../ui/TypingEffect";
 import ChatInput from "./ChatInput";
 import ModelPicker from "./ModelPicker";
+import { DARK_SURFACE } from "../../config/darkMode";
 
 export const FEED_MAX_WIDTH = 1000;
 
@@ -140,14 +141,14 @@ const ChatComposer = memo(function ChatComposer({
                   <>
                     <TypingEffect text="Nice to see you" speed={50}>
                       {(displayedText) => (
-                        <Typography sx={{ mb: 2, fontSize: { xs: "1.6rem", md: "2rem" }, fontWeight: 300, lineHeight: 1.3, color: textColor }}>
+                        <Typography sx={{ mb: 1, fontFamily: 'Georgia, "Times New Roman", serif', fontSize: { xs: "1.6rem", md: "2rem" }, fontWeight: 400, lineHeight: 1.3, color: textColor }}>
                           {displayedText}
                         </Typography>
                       )}
                     </TypingEffect>
                     <TypingEffect text={welcomeMessage} speed={50} delay={200}>
                       {(displayedText) => (
-                        <Typography sx={{ fontSize: { xs: "1rem", md: "1.2rem" }, fontWeight: 300, lineHeight: 1.3, color: textColor }}>
+                        <Typography sx={{ fontSize: { xs: "1rem", md: "1.1rem" }, fontWeight: 300, lineHeight: 1.3, color: textColor }}>
                           {displayedText}
                         </Typography>
                       )}
@@ -165,10 +166,10 @@ const ChatComposer = memo(function ChatComposer({
           sx={{
             px: 2.5,
             py: 1.5,
-            borderRadius: "14px",
-            border: `1px solid ${isDarkBg ? "rgba(255,255,255,0.12)" : "rgba(0, 0, 0, 0.12)"}`,
-            backgroundColor: isDarkBg ? "#242424" : "#ffffff",
-            boxShadow: isDarkBg ? "0 4px 20px rgba(0,0,0,0.3)" : "0 4px 20px rgba(0,0,0,0.06)",
+            borderRadius: "10px",
+            border: `1px solid ${isDarkBg ? "rgba(255,255,255,0.22)" : "rgba(0, 0, 0, 0.12)"}`,
+            backgroundColor: isDarkBg ? DARK_SURFACE : "#ffffff",
+            boxShadow: isDarkBg ? "none" : "0 4px 20px rgba(0,0,0,0.06)",
           }}
         >
           <ChatInput

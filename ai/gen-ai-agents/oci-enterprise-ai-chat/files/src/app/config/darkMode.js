@@ -3,8 +3,9 @@
  * Apply to a container's `sx` prop to theme all children.
  */
 
-export const DARK_BG = "#1a1a1a";
-export const DARK_SURFACE = "#242424";
+// Agent Hub palette
+export const DARK_BG = "#1E282C";
+export const DARK_SURFACE = "#141A1F";
 export const DARK_TEXT = "#e5e5e5";
 export const DARK_MUTED = "rgba(255,255,255,0.5)";
 export const DARK_BORDER = "rgba(255,255,255,0.10)";
@@ -13,13 +14,16 @@ export const DARK_SUBTLE = "rgba(255,255,255,0.05)";
 export const darkCssVars = {
   "--dm-bg": DARK_BG,
   "--dm-surface": DARK_SURFACE,
-  "--dm-widget-bg": "#2a2a2a",
+  "--dm-widget-bg": "#263237",
   "--dm-text": DARK_TEXT,
   "--dm-muted": DARK_MUTED,
   "--dm-border": DARK_BORDER,
   "--dm-subtle": DARK_SUBTLE,
   "--dm-overlay-opacity": "1",
   "--dm-success-text": "#81c784",
+  "--dm-pine-text": "#8FC1CF",
+  "--dm-neutral-text": "#C9C3BF",
+  "--dm-red-text": "#F0937F",
   "--dm-user-bubble": "rgba(255,255,255,0.08)",
 };
 

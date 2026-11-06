@@ -3,7 +3,7 @@
 import { ArrowLeft, Settings, Building2, Users } from "lucide-react";
 import dynamic from "next/dynamic";
 import Header from "../ui/Header";
-import { darkModeOverrides, darkCssVars, lightCssVars, DARK_BG } from "../../config/darkMode";
+import { darkModeOverrides, darkCssVars, lightCssVars, DARK_BG, DARK_SURFACE } from "../../config/darkMode";
 import { Box, CircularProgress, IconButton, Typography, ThemeProvider, createTheme, useTheme } from "@mui/material";
 import { motion } from "framer-motion";
 import VerticalTabs from "../ui/VerticalTabs";
@@ -49,7 +49,7 @@ export default function SettingsPage({ defaultTab = 'prompts' }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(ROUTE_TO_TAB[defaultTab] ?? 0);
   const [appMode, setAppMode] = useState("client");
-  const [uiSettings, setUiSettings] = useState({});
+  const [uiSettings, setUiSettings] = useState({ darkMode: true });
   const parentTheme = useTheme();
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export default function SettingsPage({ defaultTab = 'prompts' }) {
     if (saved === "client" || saved === "internal") setAppMode(saved);
     try {
       const stored = localStorage.getItem("uiSettings");
-      if (stored) setUiSettings(JSON.parse(stored));
+      if (stored) setUiSettings({ darkMode: true, ...JSON.parse(stored) });
     } catch {}
 
     const handleUiSettingsChanged = (e) => setUiSettings(e.detail);
@@ -74,7 +74,7 @@ export default function SettingsPage({ defaultTab = 'prompts' }) {
       palette: {
         ...parentTheme.palette,
         mode: "dark",
-        background: { default: DARK_BG, paper: "#242424" },
+        background: { default: DARK_BG, paper: DARK_SURFACE },
         text: { primary: "#e5e5e5", secondary: "rgba(255,255,255,0.5)" },
         divider: "rgba(255,255,255,0.08)",
       },

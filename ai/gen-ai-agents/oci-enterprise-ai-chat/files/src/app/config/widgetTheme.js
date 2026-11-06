@@ -186,6 +186,24 @@ export function getColor(colorCode) {
   return COLORS.palette[colorCode] || null;
 }
 
+// Palette colours too dark to read on a dark widget. They stay hex in the
+// palette because some widgets append alpha to them.
+const LOW_CONTRAST_COLORS = {
+  "#35535C": "var(--dm-pine-text, #35535C)",
+  "#5c5552": "var(--dm-neutral-text, #5c5552)",
+  "#312d2a": "var(--dm-neutral-text, #312d2a)",
+  "#C74634": "var(--dm-red-text, #C74634)",
+  "#4C825C": "var(--dm-success-text, #4C825C)",
+};
+
+/**
+ * A palette color for text and icons, lightened in dark mode where needed.
+ * Apply it as CSS, not as an SVG attribute, which can't read variables.
+ */
+export function readableColor(color) {
+  return LOW_CONTRAST_COLORS[color] || color;
+}
+
 /**
  * Get size configuration
  */
@@ -206,5 +224,6 @@ export default {
   INPUT,
   ANIMATION,
   getColor,
+  readableColor,
   getSize,
 };

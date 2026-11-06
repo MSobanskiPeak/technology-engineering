@@ -8,6 +8,7 @@ import { useState, useEffect, memo, useCallback, useImperativeHandle, forwardRef
 import { MCPService } from "../../services/mcpService";
 import IOSSwitch from "../ui/IOSSwitch";
 import { withBase } from "../../../lib/withBase";
+import { DARK_SURFACE } from "../../config/darkMode";
 
 export const TEXT_EXTENSIONS = ['.txt', '.md', '.json', '.js', '.ts', '.jsx', '.tsx', '.css', '.html', '.xml', '.csv', '.log', '.py', '.java', '.c', '.cpp', '.h', '.sql', '.yaml', '.yml', '.sh', '.env'];
 const LONG_TEXT_THRESHOLD = 500;
@@ -757,7 +758,7 @@ const ChatInput = memo(forwardRef(function ChatInput({
                     sx: {
                       width: 160,
                       p: 0.5,
-                      backgroundColor: isDarkBg ? "#242424" : "#fff",
+                      backgroundColor: isDarkBg ? DARK_SURFACE : "#fff",
                       color: isDarkBg ? "#e5e5e5" : "#1a1a1a",
                       border: isDarkBg ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.08)",
                     },
@@ -850,7 +851,7 @@ const ChatInput = memo(forwardRef(function ChatInput({
                 sx: {
                   mt: 0.5,
                   minWidth: 160,
-                  backgroundColor: isDarkBg ? "#242424" : "#fff",
+                  backgroundColor: isDarkBg ? DARK_SURFACE : "#fff",
                   color: isDarkBg ? "#e5e5e5" : "#1a1a1a",
                   border: isDarkBg ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.08)",
                 },
@@ -880,7 +881,7 @@ const ChatInput = memo(forwardRef(function ChatInput({
                   width: 200,
                   p: 1,
                   pb: 0.5,
-                  backgroundColor: isDarkBg ? "#242424" : "#fff",
+                  backgroundColor: isDarkBg ? DARK_SURFACE : "#fff",
                   color: isDarkBg ? "#e5e5e5" : "#1a1a1a",
                   border: isDarkBg ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.08)",
                 },

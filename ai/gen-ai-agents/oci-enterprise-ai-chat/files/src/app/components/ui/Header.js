@@ -57,7 +57,7 @@ export default function Header({
         px: { xs: 1.5, md: 3 },
         py: 1.5,
         zIndex: 100,
-        backgroundColor: isDarkBg ? "rgba(26, 26, 26, 0.85)" : "rgba(255, 255, 255, 0.8)",
+        backgroundColor: isDarkBg ? "rgba(30, 40, 44, 0.85)" : "rgba(255, 255, 255, 0.8)",
         backdropFilter: "blur(10px)",
       }}
     >
@@ -117,7 +117,7 @@ export default function Header({
                 top: "0.15em",
               }}
             >
-              {appTitle || (<><Box component="span" sx={{ fontWeight: 600 }}>OCI</Box>{" "}Enterprise AI</>)}
+              {appTitle || (<><Box component="span" sx={{ fontWeight: 600 }}>Oracle</Box>{" "}AIDP</>)}
             </Typography>
             {showLabChip && (
               <Chip

@@ -25,6 +25,7 @@ import {
   ANIMATION,
   getColor,
   getSize,
+  readableColor,
 } from "../../config/widgetTheme";
 
 const ICONS = {
@@ -78,8 +79,9 @@ function WidgetIcon({ name, size = 24, color }) {
       initial={{ scale: 0.5, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.3, delay: 0.05, ease: [0.25, 0.46, 0.45, 0.94] }}
+      style={{ color }}
     >
-      <IconComponent size={size} color={color} />
+      <IconComponent size={size} />
     </motion.div>
   );
 }
@@ -2509,7 +2511,7 @@ function WidgetKPICard({ value, label, color }) {
           sx={{
             fontSize: '1.5rem',
             fontWeight: 700,
-            color: color || COLORS.primary,
+            color: readableColor(color) || COLORS.primary,
             lineHeight: 1.2,
           }}
         >
@@ -2785,7 +2787,7 @@ export default function Widget({ props = {}, streamingKey = null, streamingValue
         );
 
       case "ic":
-        return <WidgetIcon key={key} name={displayValue} size={size.icon} color={isDark ? textColors.primary : themeColor} />;
+        return <WidgetIcon key={key} name={displayValue} size={size.icon} color={isDark ? textColors.primary : readableColor(themeColor)} />;
 
       case "i":
         return <WidgetImage key={key} src={displayValue} position={parsed.position} />;
@@ -2798,7 +2800,7 @@ export default function Widget({ props = {}, streamingKey = null, streamingValue
             animate={{ opacity: 1, x: 0, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            <Typography className="dm-keep-color" sx={{ fontSize: "clamp(1.2rem, 4vw, 2rem)", fontWeight: 700, color: isDark ? textColors.primary : themeColor, textAlign: isCentered ? "center" : "left", lineHeight: 1.2, wordBreak: "break-word" }}>{displayValue}</Typography>
+            <Typography className="dm-keep-color" sx={{ fontSize: "clamp(1.2rem, 4vw, 2rem)", fontWeight: 700, color: isDark ? textColors.primary : readableColor(themeColor), textAlign: isCentered ? "center" : "left", lineHeight: 1.2, wordBreak: "break-word" }}>{displayValue}</Typography>
           </motion.div>
         );
 
