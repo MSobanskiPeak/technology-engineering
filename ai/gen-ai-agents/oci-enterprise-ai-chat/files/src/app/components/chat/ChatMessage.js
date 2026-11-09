@@ -916,7 +916,7 @@ const ChatMessage = memo(function ChatMessage({
   const [traceDialogOpen, setTraceDialogOpen] = useState(false);
 
   // Single unified indicator: dots show continuously from loading through thinking.
-  // "Thinking..." label fades in when thinking message arrives — no gap, no flicker.
+  // "Finishing up..." label fades in when thinking message arrives — no gap, no flicker.
   const [showIndicator, setShowIndicator] = useState(false);
   const indicatorStartRef = useRef(null);
 
@@ -2245,7 +2245,7 @@ const ChatMessage = memo(function ChatMessage({
                           fontStyle: "italic",
                         }}
                       >
-                        Thinking...
+                        Finishing up...
                       </Typography>
                     </motion.span>
                   )}

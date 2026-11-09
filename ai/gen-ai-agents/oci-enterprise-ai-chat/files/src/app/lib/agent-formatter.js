@@ -69,13 +69,24 @@ async function streamFormattedAnswer({ question, answer, formatInstructions, emi
   log.info('Formatter completed', { model: FORMATTER_MODEL, chars: emitted });
 }
 
-// Agent progress lines ("...Initialising session") are not part of the answer:
-// they become status updates shown as the reasoning chip's label.
-const STATUS_PREFIX = '...';
+// Agent progress lines ("...Initialising session" or "Initialising session...")
+// are not part of the answer: they become status updates shown as the
+// reasoning chip's label. Longer lines are answer text even if they end in "...".
+// "…" (a single ellipsis character) counts as well.
+const LEADING_DOTS = /^(\.{3,}|…)\s*/;
+const TRAILING_DOTS = /\s*(\.{3,}|…)$/;
+const MAX_STATUS_LENGTH = 120;
+
+const statusText = (line) => line.trim().replace(LEADING_DOTS, '').replace(TRAILING_DOTS, '');
+
+const isStatusLine = (line) => {
+  const text = line.trim();
+  return text.length <= MAX_STATUS_LENGTH && (LEADING_DOTS.test(text) || TRAILING_DOTS.test(text));
+};
 
 /**
  * Wraps a route's chunk emitter.
- * - Agent progress lines starting with "..." become {reasoning: {type: 'status'}}.
+ * - Agent progress lines starting or ending with "..." become {reasoning: {type: 'status'}}.
  * - Without formatInstructions, the rest of the agent's text is the answer.
  * - With them, it is collected and shown in the reasoning panel, and finish()
  *   streams the formatted answer.
@@ -92,7 +103,7 @@ export function createAgentOutput({ emit, formatInstructions, log }) {
   };
 
   const emitStatus = (line) => {
-    const text = line.trim().slice(STATUS_PREFIX.length).trim();
+    const text = statusText(line);
     if (!text) return;
     panelOpen = true;
     emit({ reasoning: { type: 'status', text } });
@@ -111,10 +122,10 @@ export function createAgentOutput({ emit, formatInstructions, log }) {
     agentAnswer += text;
   };
 
-  const processLine = (line) => (line.trim().startsWith(STATUS_PREFIX) ? emitStatus(line) : emitAnswerText(line));
+  const processLine = (line) => (isStatusLine(line) ? emitStatus(line) : emitAnswerText(line));
 
-  // Text arrives in arbitrary pieces. A line is held back only while it could
-  // still be a progress line (it is empty so far, or starts with ".").
+  // Text arrives in arbitrary pieces. A line is held back until it ends, since
+  // a trailing "..." can make it a progress line, unless it grows too long to be one.
   const handleText = (text) => {
     let rest = text;
     while (rest) {
@@ -125,11 +136,10 @@ export function createAgentOutput({ emit, formatInstructions, log }) {
         emitAnswerText(piece);
       } else {
         pending += piece;
-        const start = pending.trimStart();
         if (nl !== -1) {
           processLine(pending);
           pending = '';
-        } else if (!start.startsWith(STATUS_PREFIX) && !STATUS_PREFIX.startsWith(start)) {
+        } else if (pending.trim().length > MAX_STATUS_LENGTH) {
           emitAnswerText(pending);
           pending = '';
           midLine = true;
@@ -140,11 +150,21 @@ export function createAgentOutput({ emit, formatInstructions, log }) {
   };
 
   return {
+    // `fragment: true` marks text that arrived as one whole upstream message
+    // (Agent Hub sends each progress update that way, often without a line
+    // break, so it would otherwise run into the next line).
     emit(chunk) {
-      if (chunk.text) return handleText(chunk.text);
+      if (chunk.text) {
+        if (chunk.fragment && !midLine && isStatusLine(chunk.text) && statusText(chunk.text)) {
+          if (pending) processLine(pending);
+          pending = '';
+          return emitStatus(chunk.text);
+        }
+        return handleText(chunk.text);
+      }
       if (chunk.reasoning?.type === 'delta') {
         // A2A progress updates arrive as reasoning text.
-        if ((chunk.reasoning.text || '').trim().startsWith(STATUS_PREFIX)) return emitStatus(chunk.reasoning.text);
+        if (isStatusLine(chunk.reasoning.text || '')) return emitStatus(chunk.reasoning.text);
         panelOpen = true;
         return emit(chunk);
       }

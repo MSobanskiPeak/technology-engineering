@@ -137,10 +137,10 @@ export async function POST(request) {
         // formatter's output becomes the answer.
         const output = createAgentOutput({ emit, formatInstructions, log });
         let streamed = '';
-        const emitText = (text) => {
+        const emitText = (text, fragment = false) => {
           if (!text) return;
           streamed += text;
-          output.emit({ text });
+          output.emit({ text, fragment });
         };
         // The final event repeats the whole answer: emit only what wasn't streamed yet.
         const emitFinal = (full) => {
@@ -188,7 +188,8 @@ export async function POST(request) {
               emitFinal(text);
               break;
             }
-            emitText(text);
+            // Each snapshot event carries one whole fragment (e.g. a progress update)
+            emitText(text, true);
           }
 
           if (!streamed) log.warn('Agent stream ended without an answer', { elapsed: Date.now() - startTime });
