@@ -17,6 +17,9 @@ const inputFontSizes = { xs: "1rem", md: "1.1rem" };
 const EASE = [0.25, 0.46, 0.45, 0.94];
 // Space between the welcome text and the input, and between the input and the examples
 const INPUT_GAP = 2.5;
+// The examples list (0.5) plus each example's own padding (1), so the welcome
+// text lines up with the example arrows
+const EXAMPLES_INDENT = 1.5;
 
 // The selected model's own entry (by full id, or by name without the
 // "agenthub."/"openai." prefix), else the default entry
@@ -119,7 +122,7 @@ const ChatComposer = memo(function ChatComposer({
               style={{ overflow: "hidden" }}
             >
               {/* Text sits at the bottom, so the space kept for the typing effect stays above it */}
-              <Box sx={{ minHeight: { xs: 72, md: 88 }, display: "flex", flexDirection: "column", justifyContent: "flex-end", mb: INPUT_GAP }}>
+              <Box sx={{ minHeight: { xs: 72, md: 88 }, display: "flex", flexDirection: "column", justifyContent: "flex-end", mb: INPUT_GAP, pl: EXAMPLES_INDENT }}>
                 {customWelcome ? (
                   <motion.div
                     key={selectedModel}
