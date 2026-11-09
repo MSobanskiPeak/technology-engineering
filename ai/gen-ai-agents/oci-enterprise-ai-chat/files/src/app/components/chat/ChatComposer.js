@@ -15,6 +15,8 @@ export const FEED_MAX_WIDTH = 1000;
 
 const inputFontSizes = { xs: "1rem", md: "1.1rem" };
 const EASE = [0.25, 0.46, 0.45, 0.94];
+// Space between the welcome text and the input, and between the input and the examples
+const INPUT_GAP = 2.5;
 
 // The selected model's own entry (by full id, or by name without the
 // "agenthub."/"openai." prefix), else the default entry
@@ -116,7 +118,8 @@ const ChatComposer = memo(function ChatComposer({
               transition={{ duration: 0.25, ease: EASE }}
               style={{ overflow: "hidden" }}
             >
-              <Box sx={{ minHeight: { xs: 72, md: 88 } }}>
+              {/* Text sits at the bottom, so the space kept for the typing effect stays above it */}
+              <Box sx={{ minHeight: { xs: 72, md: 88 }, display: "flex", flexDirection: "column", justifyContent: "flex-end", mb: INPUT_GAP }}>
                 {customWelcome ? (
                   <motion.div
                     key={selectedModel}
@@ -126,7 +129,6 @@ const ChatComposer = memo(function ChatComposer({
                   >
                     <Box
                       sx={{
-                        mb: 2.5,
                         fontSize: { xs: "0.95rem", md: "1.05rem" },
                         lineHeight: 1.5,
                         color: textColor,
@@ -201,7 +203,7 @@ const ChatComposer = memo(function ChatComposer({
               transition={{ duration: 0.25, ease: EASE }}
               style={{ overflow: "hidden" }}
             >
-              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5, mt: 2, px: 0.5 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5, mt: INPUT_GAP, px: 0.5 }}>
                 {exampleQueries.map((query) => (
                   <Box
                     key={query}
