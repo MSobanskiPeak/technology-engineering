@@ -916,7 +916,7 @@ const ChatMessage = memo(function ChatMessage({
   const [traceDialogOpen, setTraceDialogOpen] = useState(false);
 
   // Single unified indicator: dots show continuously from loading through thinking.
-  // "Finishing up..." label fades in when thinking message arrives — no gap, no flicker.
+  // "Finishing up..." label fades in once the agent has answered — no gap, no flicker.
   const [showIndicator, setShowIndicator] = useState(false);
   const indicatorStartRef = useRef(null);
 
@@ -944,13 +944,20 @@ const ChatMessage = memo(function ChatMessage({
   // Conditions from props/exchange
   const isInitialLoading = exchange.isLatest && isLoading && exchange.responses.length === 0;
   const hasThinkingMessage = exchange.isLatest && exchange.responses.some(r => r.type === "thinking");
+  // The agent's progress steps are over and its answer is being written (the
+  // reasoning panel gets "Agent answer:" from lib/agent-formatter.js), so only
+  // the formatting step is left
+  const isFinishingUp = exchange.isLatest && isLoading && exchange.responses.some(r => r.type === "reasoning" && r.text?.includes("Agent answer:"));
+  // Nothing of the answer is on screen yet (progress chips and statuses don't count)
+  const awaitingAnswer = exchange.isLatest && isLoading && !hasContent;
   const hasCallingChips = exchange.isLatest && exchange.responses.some(r => r.type === "mcp_chip" && r.status === "calling");
   // Detect gap after tool completion: chips are done but no text has arrived yet
   const waitingAfterTools = exchange.isLatest && isLoading &&
     exchange.responses.some(r => r.type === "mcp_chip" && r.status === "completed") &&
     !exchange.responses.some(r => (r.type === "text" && r.content) || r.type === "widget" || r.type === "widget_v2");
-  // Show indicator when loading/thinking, or waiting after tool call — but not while chips are actively calling
-  const shouldShowIndicator = (isInitialLoading || hasThinkingMessage || waitingAfterTools) && !hasCallingChips;
+  // Show indicator from sending until the answer appears (statuses included),
+  // or while waiting after a tool call — but not while chips are actively calling
+  const shouldShowIndicator = (isInitialLoading || hasThinkingMessage || waitingAfterTools || awaitingAnswer) && !hasCallingChips;
 
   useEffect(() => {
     if (shouldShowIndicator && !showIndicator) {
@@ -2218,7 +2225,7 @@ const ChatMessage = memo(function ChatMessage({
           </Box>
         )}
 
-        {/* Loading/Thinking indicator — single continuous element */}
+        {/* Loading indicator — single continuous element; "Finishing up..." once the agent has answered */}
         <AnimatePresence>
           {showIndicator && (
             <motion.div
@@ -2230,7 +2237,7 @@ const ChatMessage = memo(function ChatMessage({
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minHeight: 24 }}>
                 <DotMatrixLoader size="medium" delay={!hasThinkingMessage ? 400 : 0} />
                 <AnimatePresence>
-                  {hasThinkingMessage && (
+                  {isFinishingUp && (
                     <motion.span
                       initial={{ opacity: 0, x: -5 }}
                       animate={{ opacity: 1, x: 0 }}
