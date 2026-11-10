@@ -84,9 +84,15 @@ const isStatusLine = (line) => {
   return text.length <= MAX_STATUS_LENGTH && (LEADING_DOTS.test(text) || TRAILING_DOTS.test(text));
 };
 
+// The agent ends its answer with notes for the formatting model under this
+// heading. They (and everything after) go to the formatter but are never shown.
+const SUGGESTED_OUTPUT = /\*{3}\s*SUGGESTED OUTPUT\s*\*{3}/i;
+
 /**
  * Wraps a route's chunk emitter.
  * - Agent progress lines starting or ending with "..." become {reasoning: {type: 'status'}}.
+ * - "*** SUGGESTED OUTPUT ***" and everything after it is passed to the
+ *   formatter but not shown.
  * - Without formatInstructions, the rest of the agent's text is the answer.
  * - With them, it is collected and shown in the reasoning panel, and finish()
  *   streams the formatted answer.
@@ -96,6 +102,7 @@ export function createAgentOutput({ emit, formatInstructions, log }) {
   let panelOpen = false;  // a reasoning item is open in the UI
   let pending = '';       // start of a line that may still turn out to be a progress line
   let midLine = false;    // the current line is already known to be answer text
+  let hidden = false;     // the SUGGESTED OUTPUT section has started: collect, don't show
 
   const closePanel = () => {
     if (panelOpen) emit({ reasoning: { type: 'done' } });
@@ -110,6 +117,22 @@ export function createAgentOutput({ emit, formatInstructions, log }) {
   };
 
   const emitAnswerText = (text) => {
+    if (!text) return;
+    if (hidden) {
+      agentAnswer += text;
+      return;
+    }
+    const marker = text.match(SUGGESTED_OUTPUT);
+    if (marker) {
+      showAnswerText(text.slice(0, marker.index));
+      hidden = true;
+      agentAnswer += text.slice(marker.index);
+      return;
+    }
+    showAnswerText(text);
+  };
+
+  const showAnswerText = (text) => {
     if (!text || (!agentAnswer && !text.trim())) return; // skip blank lines before the answer
     if (formatInstructions) {
       if (!agentAnswer) emit({ reasoning: { type: 'delta', text: 'Agent answer:\n\n' } });
@@ -122,7 +145,7 @@ export function createAgentOutput({ emit, formatInstructions, log }) {
     agentAnswer += text;
   };
 
-  const processLine = (line) => (isStatusLine(line) ? emitStatus(line) : emitAnswerText(line));
+  const processLine = (line) => (!hidden && isStatusLine(line) ? emitStatus(line) : emitAnswerText(line));
 
   // Text arrives in arbitrary pieces. A line is held back until it ends, since
   // a trailing "..." can make it a progress line, unless it grows too long to be one.
@@ -155,7 +178,7 @@ export function createAgentOutput({ emit, formatInstructions, log }) {
     // break, so it would otherwise run into the next line).
     emit(chunk) {
       if (chunk.text) {
-        if (chunk.fragment && !midLine && isStatusLine(chunk.text) && statusText(chunk.text)) {
+        if (chunk.fragment && !midLine && !hidden && isStatusLine(chunk.text) && statusText(chunk.text)) {
           if (pending) processLine(pending);
           pending = '';
           return emitStatus(chunk.text);
