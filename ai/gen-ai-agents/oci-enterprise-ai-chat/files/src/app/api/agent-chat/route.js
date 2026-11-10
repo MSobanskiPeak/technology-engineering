@@ -146,7 +146,12 @@ export async function POST(request) {
         const emitFinal = (full) => {
           if (full.startsWith(streamed)) emitText(full.slice(streamed.length));
           else if (!streamed) emitText(full);
-          else log.warn('Final answer differs from streamed text', { streamedLen: streamed.length, finalLen: full.length });
+          else log.warn('Final answer differs from streamed text, so it was not shown', {
+            streamedLen: streamed.length,
+            finalLen: full.length,
+            streamed: streamed.slice(0, 500),
+            final: full.slice(0, 2000),
+          });
         };
 
         emit({ thinking: true });
@@ -162,6 +167,15 @@ export async function POST(request) {
               log.warn('Unparseable agent event', { payload: payload.slice(0, 200) });
               continue;
             }
+
+            // Debug: every event the agent sends, as received
+            const snapshot = event.response || (event.object === 'response' ? event : null);
+            log.info('Agent event', {
+              type: event.type,
+              status: snapshot?.output?.[0]?.status || snapshot?.status,
+              text: event.delta ?? outputText(snapshot),
+              ...(!snapshot && !event.delta && { raw: payload.slice(0, 2000) }),
+            });
 
             const error = errorMessage(event);
             if (error) throw new Error(error);
@@ -193,6 +207,7 @@ export async function POST(request) {
           }
 
           if (!streamed) log.warn('Agent stream ended without an answer', { elapsed: Date.now() - startTime });
+          log.info('Agent full text', { text: streamed });
           log.info('Agent chat completed', { elapsed: Date.now() - startTime, chars: streamed.length, opcRequestId });
           await output.finish(userText);
           if (formatInstructions) log.info('Agent chat request completed', { elapsed: Date.now() - startTime });
