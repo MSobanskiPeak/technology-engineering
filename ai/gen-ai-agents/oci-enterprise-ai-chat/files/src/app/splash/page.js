@@ -10,7 +10,7 @@ export default function SplashPage() {
   const router = useRouter();
   const [isLoaded, setIsLoaded] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
-  const [appTitle, setAppTitle] = useState("Oracle AIDP");
+  const [appTitle, setAppTitle] = useState("Oracle AI Data Platform");
   const [appLogo, setAppLogo] = useState("");
 
   useEffect(() => {
@@ -20,10 +20,10 @@ export default function SplashPage() {
       if (stored) {
         try {
           const parsedSettings = JSON.parse(stored);
-          setAppTitle(parsedSettings.appTitle || "Oracle AIDP");
+          setAppTitle(parsedSettings.appTitle || "Oracle AI Data Platform");
           setAppLogo(parsedSettings.appLogo || "");
           // Update document title
-          document.title = parsedSettings.appTitle || "Oracle AIDP";
+          document.title = parsedSettings.appTitle || "Oracle AI Data Platform";
         } catch (e) {
           console.error('Error parsing UI settings:', e);
         }
