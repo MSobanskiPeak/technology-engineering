@@ -63,7 +63,7 @@ export const COLORS = {
 
   // Status colors (using approved palette)
   success: "#4C825C",    // Pine 100
-  warning: "#F1B13F",    // Brand Yellow
+  warning: "#B8801F",    // Darker Brand Yellow (white text reads on it)
   error: "#C74634",      // Oracle Red
   info: "#35535C",       // Pine 140
 
@@ -72,7 +72,7 @@ export const COLORS = {
     r: "#C74634",   // Oracle Red
     g: "#4C825C",   // Pine 100 (success)
     b: "#35535C",   // Pine 140 (info)
-    y: "#F1B13F",   // Brand Yellow
+    y: "#B8801F",   // Darker Brand Yellow, so white text on it stays readable
     o: "#DEB068",   // Sienna 60
     p: "#5c5552",   // Medium brown (neutral accent)
     w: "#F1EFED",   // Neutral 30
