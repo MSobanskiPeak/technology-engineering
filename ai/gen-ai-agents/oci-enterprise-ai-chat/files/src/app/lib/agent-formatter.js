@@ -24,6 +24,7 @@ Rules:
 - The agent cannot draw charts or visuals, but you can. If it says it can't provide a chart or visual and its answer contains the data, drop that remark and build the requested widget from the data.
 - If nothing in the answer benefits from a widget, or the agent could not answer, return the answer as it is.
 - Write as the assistant answering the user. Do not mention the agent, these instructions or any reformatting.
+- The agent's answer may end with a section headed "*** SUGGESTED OUTPUT ***". It holds instructions for you on how to present the answer: follow them, but never include that heading or any of that section's text in your output.
 - Never link to or embed external images or chart services; only use the widget syntax.
 - Chart data (ch_ln, ch_br, ch_pie, ch_don values) must be plain numbers without symbols or suffixes (6840000, not $6.84M); put the unit in the title.
 - Everywhere else (tables, KPIs, stat cards, text) show figures exactly as the agent wrote them (e.g. $11.32M).`;
@@ -87,6 +88,38 @@ const isStatusLine = (line) => {
 // The agent ends its answer with notes for the formatting model under this
 // heading. They (and everything after) go to the formatter but are never shown.
 const SUGGESTED_OUTPUT = /\*{3}\s*SUGGESTED OUTPUT\s*\*{3}/i;
+// The heading may be split across chunks, so text from the first "*" in the
+// last MARKER_WINDOW characters is held back until it can't be the heading.
+const MARKER_WINDOW = 40;
+
+// Passes text on to show(), cutting it off for good at the SUGGESTED OUTPUT
+// heading. Every path that prints to the screen goes through one of these.
+function createSectionGuard(show) {
+  let held = '';
+  let cut = false;
+  return {
+    get cut() { return cut; },
+    write(text) {
+      if (cut || !text) return;
+      held += text;
+      const marker = held.match(SUGGESTED_OUTPUT);
+      if (marker) {
+        show(held.slice(0, marker.index));
+        held = '';
+        cut = true;
+        return;
+      }
+      const star = held.indexOf('*', Math.max(0, held.length - MARKER_WINDOW));
+      const release = star === -1 ? held.length : star;
+      show(held.slice(0, release));
+      held = held.slice(release);
+    },
+    flush() {
+      if (!cut) show(held);
+      held = '';
+    },
+  };
+}
 
 /**
  * Wraps a route's chunk emitter.
@@ -98,11 +131,11 @@ const SUGGESTED_OUTPUT = /\*{3}\s*SUGGESTED OUTPUT\s*\*{3}/i;
  *   streams the formatted answer.
  */
 export function createAgentOutput({ emit, formatInstructions, log }) {
-  let agentAnswer = '';   // the agent's answer, without progress lines
+  let agentAnswer = '';   // the agent's answer, without progress lines (sent to the formatter)
+  let shownAnswer = '';   // the part of it shown on screen (no SUGGESTED OUTPUT section)
   let panelOpen = false;  // a reasoning item is open in the UI
   let pending = '';       // start of a line that may still turn out to be a progress line
   let midLine = false;    // the current line is already known to be answer text
-  let hidden = false;     // the SUGGESTED OUTPUT section has started: collect, don't show
 
   const closePanel = () => {
     if (panelOpen) emit({ reasoning: { type: 'done' } });
@@ -116,36 +149,27 @@ export function createAgentOutput({ emit, formatInstructions, log }) {
     emit({ reasoning: { type: 'status', text } });
   };
 
-  const emitAnswerText = (text) => {
+  const answerGuard = createSectionGuard((text) => {
     if (!text) return;
-    if (hidden) {
-      agentAnswer += text;
-      return;
-    }
-    const marker = text.match(SUGGESTED_OUTPUT);
-    if (marker) {
-      showAnswerText(text.slice(0, marker.index));
-      hidden = true;
-      agentAnswer += text.slice(marker.index);
-      return;
-    }
-    showAnswerText(text);
-  };
-
-  const showAnswerText = (text) => {
-    if (!text || (!agentAnswer && !text.trim())) return; // skip blank lines before the answer
     if (formatInstructions) {
-      if (!agentAnswer) emit({ reasoning: { type: 'delta', text: 'Agent answer:\n\n' } });
+      if (!shownAnswer) emit({ reasoning: { type: 'delta', text: 'Agent answer:\n\n' } });
       panelOpen = true;
       emit({ reasoning: { type: 'delta', text } });
     } else {
       closePanel(); // progress is over once the answer is being written
       emit({ text });
     }
+    shownAnswer += text;
+  });
+
+  const emitAnswerText = (text) => {
+    if (!text || (!agentAnswer && !text.trim())) return; // skip blank lines before the answer
     agentAnswer += text;
+    answerGuard.write(text);
   };
 
-  const processLine = (line) => (!hidden && isStatusLine(line) ? emitStatus(line) : emitAnswerText(line));
+  // After the SUGGESTED OUTPUT heading nothing is a progress line
+  const processLine = (line) => (!answerGuard.cut && isStatusLine(line) ? emitStatus(line) : emitAnswerText(line));
 
   // Text arrives in arbitrary pieces. A line is held back until it ends, since
   // a trailing "..." can make it a progress line, unless it grows too long to be one.
@@ -178,7 +202,7 @@ export function createAgentOutput({ emit, formatInstructions, log }) {
     // break, so it would otherwise run into the next line).
     emit(chunk) {
       if (chunk.text) {
-        if (chunk.fragment && !midLine && !hidden && isStatusLine(chunk.text) && statusText(chunk.text)) {
+        if (chunk.fragment && !midLine && !answerGuard.cut && isStatusLine(chunk.text) && statusText(chunk.text)) {
           if (pending) processLine(pending);
           pending = '';
           return emitStatus(chunk.text);
@@ -203,26 +227,36 @@ export function createAgentOutput({ emit, formatInstructions, log }) {
     async finish(question) {
       if (pending) processLine(pending);
       pending = '';
+      answerGuard.flush();
       closePanel();
       if (!formatInstructions || !agentAnswer.trim()) return;
 
       const startTime = Date.now();
       let formattedChars = 0;
       let failed = false;
+      // In case the formatter repeats the SUGGESTED OUTPUT section
+      const formattedGuard = createSectionGuard((text) => {
+        if (!text) return;
+        formattedChars += text.length;
+        emit({ text });
+      });
       try {
         await streamFormattedAnswer({
           question,
           answer: agentAnswer,
           formatInstructions,
-          emit: (chunk) => { formattedChars += chunk.text.length; emit(chunk); },
+          emit: (chunk) => formattedGuard.write(chunk.text),
           log,
         });
       } catch (e) {
         failed = true;
         log.error('Formatting failed', { error: e.message, formattedChars });
       }
-      // Nothing formatted (error or empty output): fall back to the agent's own words.
-      if (!formattedChars) emit({ text: agentAnswer });
+      formattedGuard.flush();
+      if (formattedGuard.cut) log.warn('Formatter repeated the SUGGESTED OUTPUT section; it was cut off');
+      // Nothing formatted (error or empty output): fall back to the agent's own
+      // words, without the SUGGESTED OUTPUT section.
+      if (!formattedChars) emit({ text: shownAnswer });
       else if (failed) emit({ text: "\n\n_The formatted answer was cut short. The agent's full answer is in the reasoning panel above._" });
       log.info('Formatting step done', { elapsed: Date.now() - startTime, formattedChars, failed });
     },
