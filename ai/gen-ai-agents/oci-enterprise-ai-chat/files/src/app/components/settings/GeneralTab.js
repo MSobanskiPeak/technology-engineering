@@ -17,7 +17,7 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_UI_SETTINGS = {
-  appTitle: "Oracle AIDP",
+  appTitle: "Oracle AI Data Platform",
   appLogo: "",
   welcomeMessage: "Welcome back!",
   inputPlaceholder: "Type anything...",

@@ -55,7 +55,7 @@ export default function Home({ initialConversationId = null }) {
 
   // UI Settings from localStorage
   const [uiSettings, setUiSettings] = useState({
-    appTitle: "Oracle AIDP",
+    appTitle: "Oracle AI Data Platform",
     appLogo: "",
     welcomeMessage: "Welcome back!",
     inputPlaceholder: "Type anything...",
@@ -230,7 +230,7 @@ export default function Home({ initialConversationId = null }) {
         try {
           const parsedSettings = JSON.parse(stored);
           setUiSettings(parsedSettings);
-          document.title = parsedSettings.appTitle || "Oracle AIDP";
+          document.title = parsedSettings.appTitle || "Oracle AI Data Platform";
         } catch (e) {
           console.error("Error parsing UI settings:", e);
         }
@@ -239,7 +239,7 @@ export default function Home({ initialConversationId = null }) {
 
     const handleUiSettingsChanged = (e) => {
       setUiSettings(e.detail);
-      document.title = e.detail.appTitle || "Oracle AIDP";
+      document.title = e.detail.appTitle || "Oracle AI Data Platform";
     };
     window.addEventListener('uiSettingsChanged', handleUiSettingsChanged);
 
