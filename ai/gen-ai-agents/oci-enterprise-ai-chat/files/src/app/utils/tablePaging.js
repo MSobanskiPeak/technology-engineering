@@ -4,6 +4,7 @@ import { createContext } from "react";
 export const TABLE_PREVIOUS = "Previous records";
 export const TABLE_NEXT = "Next records";
 export const TABLE_DOWNLOAD_ALL = "Download all records";
+export const TABLE_ACTION_MESSAGES = [TABLE_PREVIOUS, TABLE_NEXT, TABLE_DOWNLOAD_ALL];
 
 // The page shown by the tables of the exchange being rendered
 export const TablePageContext = createContext(1);

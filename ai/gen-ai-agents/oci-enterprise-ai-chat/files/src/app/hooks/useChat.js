@@ -6,6 +6,7 @@ import ConversationStorage from "../services/conversationStorage";
 import { generateTitle } from "../services/titleService";
 import { groupMessages, parseContentWithWidgets } from "../utils/messageUtils";
 import { createWidgetStreamParser } from "../utils/widgetParser";
+import { TABLE_ACTION_MESSAGES } from "../utils/tablePaging";
 import { createWidgetV2StreamParser, serializeWidgetV2Tree } from "../utils/widgetV2Parser";
 import { splitMcpFunctionName } from "../lib/mcp-fn-name";
 import { isReadOnlySql } from "../lib/sqlGuard";
@@ -1673,7 +1674,12 @@ export default function useChat({ initialConversationId = null, selectedModel, o
           const nextExchange = exchanges[i + 1];
           if (nextExchange.widgetResponse) {
             const currentEx = exchanges[i];
-            const widgetIdx = currentEx.responses.findIndex(r => r.type === "widget");
+            // A table button answers the option table, which isn't always the first widget
+            const isTableAction = TABLE_ACTION_MESSAGES.includes(nextExchange.widgetResponse.action);
+            const optionTableIdx = isTableAction
+              ? currentEx.responses.findLastIndex(r => r.type === "widget" && r.widgetProps?.otb !== undefined)
+              : -1;
+            const widgetIdx = optionTableIdx >= 0 ? optionTableIdx : currentEx.responses.findIndex(r => r.type === "widget");
             if (widgetIdx >= 0) {
               currentEx.responses[widgetIdx].selectedData = {
                 ...nextExchange.widgetResponse.data,

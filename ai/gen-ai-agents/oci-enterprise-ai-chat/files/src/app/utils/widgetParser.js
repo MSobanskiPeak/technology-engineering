@@ -239,7 +239,7 @@ export function parseCompleteText(text) {
         const props = parseWidgetProps(widgetContent);
 
         // Only treat as widget if we got meaningful props (at least a type key)
-        const hasWidgetType = Object.keys(props).some(k => ['sec', 'risk', 'ck', 'tl', 'tb', 'kpi', 'mail', 'poll'].includes(k));
+        const hasWidgetType = Object.keys(props).some(k => ['sec', 'risk', 'ck', 'tl', 'tb', 'otb', 'kpi', 'mail', 'poll'].includes(k));
         if (hasWidgetType) {
           segments.push({ type: 'widget', props });
           i = i + 2 + (breakIndex > -1 ? breakIndex : remaining.length);
@@ -281,6 +281,7 @@ export const CONTENT_KEYS = {
   // New structured widgets
   tl: 'timeline',
   tb: 'table',
+  otb: 'optionTable',
   ck: 'checklist',
   sec: 'section',
   risk: 'risk',

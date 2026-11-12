@@ -1435,7 +1435,9 @@ function WidgetTimeline({ props }) {
   );
 }
 
-// Table Widget - Shows structured data in rows and columns
+// Table Widget - Shows structured data in rows and columns.
+// The option table (otb:) is the same table with Previous / Next / Download All
+// buttons (withActions); the plain table (tb:) has none.
 
 // `message` is sent to the agent as the user's next message, the same way a poll option is
 const TABLE_ACTIONS = [
@@ -1444,7 +1446,7 @@ const TABLE_ACTIONS = [
   { label: 'Download All', message: TABLE_DOWNLOAD_ALL, Icon: Download },
 ];
 
-function WidgetTable({ props, onSubmit, disabled, selectedData, isComplete }) {
+function WidgetTable({ props, withActions = false, onSubmit, disabled, selectedData, isComplete }) {
   const [copied, setCopied] = useState(false);
   const [clickedAction, setClickedAction] = useState(null);
   const tablePage = useContext(TablePageContext);
@@ -1537,7 +1539,7 @@ function WidgetTable({ props, onSubmit, disabled, selectedData, isComplete }) {
                 {props.t}
               </Typography>
             )}
-            {onSubmit && TABLE_ACTIONS.map(({ label, message, Icon }) => {
+            {withActions && onSubmit && TABLE_ACTIONS.map(({ label, message, Icon }) => {
               const isThisSelected = selectedAction === message;
               const isThisDisabled = actionsLocked || (message === TABLE_PREVIOUS && tablePage === 1);
               return (
@@ -3174,9 +3176,15 @@ export default function Widget({ props = {}, streamingKey = null, streamingValue
     return <WidgetTimeline props={props} />;
   }
 
+  // Render option table if detected (otb: key): a table with Previous / Next /
+  // Download All buttons. Checked before the plain table, which also has h:/r: keys.
+  if (props.otb !== undefined) {
+    return <WidgetTable withActions props={props} onSubmit={onSubmit} disabled={disabled} selectedData={selectedData} isComplete={isComplete} />;
+  }
+
   // Render table widget if detected (has tb: and h:/r: keys)
   if (props.tb !== undefined || (Object.keys(props).some(k => k.startsWith('h')) && Object.keys(props).some(k => k.startsWith('r')))) {
-    return <WidgetTable props={props} onSubmit={onSubmit} disabled={disabled} selectedData={selectedData} isComplete={isComplete} />;
+    return <WidgetTable props={props} />;
   }
 
   // Render checklist widget if detected (has ck: or done:/todo:/blocked: keys)

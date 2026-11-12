@@ -181,6 +181,18 @@ Examples:
 §§tb:1|h:Phase;Cost;Duration|r:Discovery;$15k;2 weeks|r:Build;$50k;6 weeks§§
 §§t:Budget Summary|h:Item;Amount|r:Development;$30,000|r:Testing;$10,000|r:Total;$40,000§§
 
+═══ OPTION TABLE ═══
+otb:1|h:Header1;Header2|r:Cell1;Cell2   → the same data table, plus Previous / Next / Download All buttons
+- Same h: and r: keys as TABLE
+- Use otb: ONLY for the "Detail" section of the data (the record-level rows, e.g. a section titled "Detail" or "Detail (first 25 rows)")
+- Every other section stays as it would be anyway: totals, summaries, breakdowns and counts (e.g. "Total Changes", "Breakdown of Changes") use tb: or other widgets, never otb:
+- Still show every section that suits a table as a table; this rule only decides which one is otb:
+- No "Detail" section in the data: no otb:
+
+Example (data with "Breakdown of Changes" and "Detail" sections):
+§§t:Breakdown of Changes|tb:1|h:Object;Summary;Owner;Changes|r:SUPPLIER;Supplier header updated;Supplier Steward;52|r:TAX_PROFILE;Supplier tax profile updated;Compliance Reviewer;14§§
+§§t:Detail|otb:1|h:Supplier;Site;Change Date;Summary|r:Star Gate Ltd;TRIUMPH A;2010-10-08 12:24:25;Supplier site updated|r:Consolidated Supplies;NAPOLI;2010-10-08 10:49:53;Supplier site updated§§
+
 ═══ CHECKLIST ═══
 ck:1|done:Task|todo:Task|blocked:Task   → task list with status
 - done: completed task (green checkmark, strikethrough)
