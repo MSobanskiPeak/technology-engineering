@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Checkbox, CircularProgress, FormControlLabel, InputAdornment, LinearProgress, MenuItem, Radio, RadioGroup, Rating, Select, Skeleton, Slider, Switch, TextField, Typography } from "@mui/material";
+import { Box, Checkbox, CircularProgress, FormControlLabel, InputAdornment, LinearProgress, Menu, MenuItem, Radio, RadioGroup, Rating, Select, Skeleton, Slider, Switch, TextField, Typography } from "@mui/material";
 import { motion } from "framer-motion";
 import {
   Sun, Cloud, CloudRain, CloudSnow, AlertCircle, Check, X, Info,
@@ -8,7 +8,7 @@ import {
   Search, Settings, Home, File, Folder, Image as ImageIcon, Video,
   Music, Download, Upload, Link, Share, Edit, Trash, Plus, Minus,
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Quote, Code, List, Send,
-  Volume2, Presentation, Maximize2, ExternalLink, Play, Copy
+  Volume2, Presentation, Maximize2, ExternalLink, Play, Copy, Filter as FilterIcon
 } from "lucide-react";
 import { useState, useCallback, useContext, useEffect, useMemo } from "react";
 import { DataGrid } from "@mui/x-data-grid";
@@ -2491,8 +2491,79 @@ function WidgetMail({ props }) {
   );
 }
 
-// KPI Card - Single metric display
-function WidgetKPICard({ value, label, color }) {
+// What a tile's "Filter for ..." option sends to the agent
+const kpiFilterMessage = (label) => `System: ${label.replace(/\|/g, ' ')}`;
+
+// "Filter for <label>" menu opened by clicking a stat tile (KPI card or a
+// plain widget with a title and a number)
+function TileFilterMenu({ anchorEl, label, onClose, onFilter }) {
+  return (
+    <Menu
+      anchorEl={anchorEl}
+      open={!!anchorEl}
+      onClose={onClose}
+      // Clicks inside the menu must not reach the tile and reopen it
+      onClick={(e) => e.stopPropagation()}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+      slotProps={{ paper: { sx: { mt: 0.5, borderRadius: '8px' } } }}
+    >
+      <MenuItem
+        onClick={() => { onClose(); onFilter(label); }}
+        sx={(theme) => ({
+          fontSize: '0.85rem',
+          gap: 1,
+          transition: 'background-color 0.15s',
+          // The menu opens outside the chat, so it gets the theme's mode
+          // rather than the --dm-* variables
+          '&:hover': {
+            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+          },
+        })}
+      >
+        <FilterIcon size={14} />
+        Filter for {label}
+      </MenuItem>
+    </Menu>
+  );
+}
+
+// A plain widget's outer box, clickable to open the filter menu. The hover
+// outline is a layer on top of the tile (its background layer would cover a
+// plain outline) and sits inside the edge so containers can't clip it.
+function FilterableTile({ label, onFilter, radius, sx, children }) {
+  const [anchorEl, setAnchorEl] = useState(null);
+  return (
+    <Box
+      onClick={(e) => setAnchorEl(e.currentTarget)}
+      sx={{
+        ...sx,
+        cursor: 'pointer',
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          borderRadius: `${radius}px`,
+          border: '1px solid transparent',
+          pointerEvents: 'none',
+          zIndex: 3,
+          transition: 'border-color 0.2s',
+        },
+        '&:hover::after': { borderColor: COLORS.primary },
+      }}
+    >
+      {children}
+      <TileFilterMenu anchorEl={anchorEl} label={label} onClose={() => setAnchorEl(null)} onFilter={onFilter} />
+    </Box>
+  );
+}
+
+// KPI Card - Single metric display. With onFilter, clicking it opens a menu
+// whose "Filter for <label>" option calls onFilter(label).
+function WidgetKPICard({ value, label, color, onFilter }) {
+  const [menuAnchor, setMenuAnchor] = useState(null);
+  const clickable = !!onFilter && !!label;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -2501,11 +2572,17 @@ function WidgetKPICard({ value, label, color }) {
       style={{ flex: 1, minWidth: 100 }}
     >
       <Box
+        onClick={clickable ? (e) => setMenuAnchor(e.currentTarget) : undefined}
         sx={{
           backgroundColor: COLORS.background.widget,
           borderRadius: 2,
           p: 2,
           textAlign: 'center',
+          ...(clickable && {
+            cursor: 'pointer',
+            transition: 'box-shadow 0.2s, transform 0.2s',
+            '&:hover': { boxShadow: `0 0 0 1px ${COLORS.primary}`, transform: 'translateY(-1px)' },
+          }),
         }}
       >
         <Typography
@@ -2531,12 +2608,19 @@ function WidgetKPICard({ value, label, color }) {
           {label}
         </Typography>
       </Box>
+      {clickable && (
+        <TileFilterMenu anchorEl={menuAnchor} label={label} onClose={() => setMenuAnchor(null)} onFilter={onFilter} />
+      )}
     </motion.div>
   );
 }
 
-// Grid Widget - KPI cards in grid layout
-function WidgetGrid({ props, columns = 3 }) {
+// Grid Widget - KPI cards in grid layout. Tiles are clickable when onSubmit is
+// given and the answer has finished streaming.
+function WidgetGrid({ props, columns = 3, onSubmit, isComplete }) {
+  const handleFilter = onSubmit && isComplete !== false
+    ? (label) => onSubmit({ _action: kpiFilterMessage(label) }, props._id || null)
+    : undefined;
   const kpis = [];
 
   for (const key of Object.keys(props)) {
@@ -2576,6 +2660,9 @@ function WidgetGrid({ props, columns = 3 }) {
             display: 'grid',
             gridTemplateColumns: `repeat(${cols}, 1fr)`,
             gap: 1.5,
+            // Room for the hover outline and lift, which the widget would otherwise clip
+            pt: 0.5,
+            px: 0.25,
           }}
         >
           {kpis.map((kpi, index) => (
@@ -2589,6 +2676,7 @@ function WidgetGrid({ props, columns = 3 }) {
                 value={kpi.value}
                 label={kpi.label}
                 color={kpi.color}
+                onFilter={handleFilter}
               />
             </motion.div>
           ))}
@@ -3209,7 +3297,7 @@ export default function Widget({ props = {}, streamingKey = null, streamingValue
 
   // Render grid/KPI widget if detected (has grid: or cols: with kpi: items)
   if ((props.grid !== undefined || props.cols !== undefined) && Object.keys(props).some(k => k.match(/^kpi\d*$/))) {
-    return <WidgetGrid props={props} />;
+    return <WidgetGrid props={props} onSubmit={onSubmit} isComplete={isComplete} />;
   }
 
   // Render chart widget if detected
@@ -3265,16 +3353,24 @@ export default function Widget({ props = {}, streamingKey = null, streamingValue
     );
   }
 
+  // A stat tile (title + number, nothing to fill in) opens the filter menu when
+  // clicked, like a KPI card. Its title is the tile text.
+  const isStatTile = props.n !== undefined && !!props.t && interactiveKeys.length === 0;
+  const tileFilter = isStatTile && onSubmit && isComplete !== false
+    ? (label) => onSubmit({ _action: kpiFilterMessage(label) }, widgetId)
+    : null;
+  const outerSx = {
+    display: embedded ? "block" : "inline-block",
+    maxWidth: props._w || "100%",
+    width: embedded ? "100%" : (props._w || "auto"),
+    minWidth: embedded ? 0 : (props._mw || 280),
+    position: "relative",
+  };
+  const Outer = tileFilter ? FilterableTile : Box;
+  const outerProps = tileFilter ? { label: props.t, onFilter: tileFilter, radius, sx: outerSx } : { sx: outerSx };
+
   return (
-    <Box
-      sx={{
-        display: embedded ? "block" : "inline-block",
-        maxWidth: props._w || "100%",
-        width: embedded ? "100%" : (props._w || "auto"),
-        minWidth: embedded ? 0 : (props._mw || 280),
-        position: "relative",
-      }}
-    >
+    <Outer {...outerProps}>
       {/* Animated background */}
       <motion.div
         initial={{ scaleY: 0, opacity: 0.5 }}
@@ -3336,6 +3432,6 @@ export default function Widget({ props = {}, streamingKey = null, streamingValue
           )}
         </Box>
       </Box>
-    </Box>
+    </Outer>
   );
 }
