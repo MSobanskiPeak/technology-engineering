@@ -328,7 +328,7 @@ export default function Home({ initialConversationId = null }) {
         ...(isDarkBg ? { ...darkCssVars, ...darkModeOverrides } : lightCssVars),
       }}
     >
-      {showTextField && <AgentHubBackground isDarkBg={isDarkBg} />}
+      {showTextField && <AgentHubBackground isDarkBg={isDarkBg} spread={hasConversation} />}
 
       {/* Header — mobile only; on desktop the sidebar holds the logo and user */}
       {isMobile && (
